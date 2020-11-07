@@ -1,0 +1,26 @@
+apply plugin: 'application'
+
+sourceCompatibility = 11.0
+mainClassName = 'org.dontdroptheball.server.GameServer'
+eclipse.project.name = appName + '-server'
+
+dependencies {
+	implementation project(':shared')
+	api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+	implementation "com.badlogicgames.gdx:gdx-backend-headless:$gdxVersion"
+	implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+	implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
+	implementation "com.github.czyzby:gdx-websocket-common:$websocketVersion"
+	implementation "com.github.czyzby:gdx-websocket-serialization:$websocketSerializationVersion"
+	implementation "org.java-websocket:Java-WebSocket:1.5.1"
+	implementation "org.slf4j:slf4j-simple:1.7.25"
+}
+
+jar {
+	archiveBaseName = "${appName}-server"
+	dependsOn configurations.runtimeClasspath
+	from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } } 
+	manifest {
+		attributes 'Main-Class': project.mainClassName
+	}
+}
