@@ -53,4 +53,8 @@ public class ClientConnectionManager extends WebSocketAdapter {
     // TODO
     return FULLY_HANDLED;
   }
+
+  public void dispose() {
+    socket.close();
+  }
 }

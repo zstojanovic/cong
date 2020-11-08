@@ -11,6 +11,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import org.dontdroptheball.shared.*;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class GameScreen extends ScreenAdapter {
   float WORLD_WIDTH = 16f;
   float WORLD_HEIGHT = 9f;
@@ -27,7 +30,12 @@ public class GameScreen extends ScreenAdapter {
 
   void setState(GameState state) {
     ball.setState(state.ballState);
-    // TODO remove the ones missing in state
+    var stateIndexes = state.playerStates.stream().map(s -> s.index).collect(Collectors.toList());
+    var missing =
+      Arrays.stream(players).filter(p -> p != null && !stateIndexes.contains(p.index)).collect(Collectors.toList());
+    for (Player p: missing) {
+      players[p.index] = null;
+    }
     for (PlayerState playerState: state.playerStates) {
       if (players[playerState.index] == null) {
         players[playerState.index] =
@@ -93,5 +101,10 @@ public class GameScreen extends ScreenAdapter {
       if (keyCode == Input.Keys.RIGHT) connectionManager.send(new KeyEvent(KeyEvent.Code.RIGHT_RELEASED));
       return true;
     }
+  }
+
+  @Override
+  public void hide() {
+    connectionManager.dispose();
   }
 }

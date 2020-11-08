@@ -59,6 +59,11 @@ public class GameServer extends ApplicationAdapter {
 		return Optional.of(player);
 	}
 
+	void disconnectPlayer(Player player) {
+		players[player.index] = null;
+		player.dispose();
+	}
+
 	void handleKeyEvent(Player player, KeyEvent event) {
 		player.handleKeyEvent(event);
 	}

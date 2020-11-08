@@ -33,12 +33,21 @@ public class ServerConnectionManager extends WebSocketServer {
   public void onOpen(WebSocket socket, ClientHandshake handshake) {
     logger.info(socket.getRemoteSocketAddress() + " new connection");
     var player = server.createNewPlayer();
-    player.ifPresent(p -> socketMap.put(socket, p));
+    player.ifPresent(p -> {
+      socketMap.put(socket, p);
+      logger.info("Player " + p.index + " created");
+    });
   }
 
   @Override
   public void onClose(WebSocket socket, int code, String reason, boolean remote) {
-    logger.info(socket + " disconnected");
+    var player = socketMap.get(socket);
+    if (player != null) {
+      logger.info("Player " + player.index + " disconnected");
+      server.disconnectPlayer(player);
+    } else {
+      logger.info(socket + " disconnected");
+    }
   }
 
   @Override
