@@ -1,13 +1,14 @@
 package org.dontdroptheball.client;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import org.dontdroptheball.shared.*;
 
@@ -28,23 +29,8 @@ public class GameScreen extends ScreenAdapter {
   Player[] players = new Player[Arena.MAX_PLAYERS];
   Texture[] paddleTextures = new Texture[Arena.MAX_PLAYERS];
 
-  void setState(GameState state) {
-    ball.setState(state.ballState);
-    var stateIndexes = state.playerStates.stream().map(s -> s.index).collect(Collectors.toList());
-    var missing =
-      Arrays.stream(players).filter(p -> p != null && !stateIndexes.contains(p.index)).collect(Collectors.toList());
-    for (Player p: missing) {
-      players[p.index] = null;
-    }
-    for (PlayerState playerState: state.playerStates) {
-      if (players[playerState.index] == null) {
-        players[playerState.index] =
-          new Player(playerState.index, playerState.location, paddleTextures[playerState.index]);
-      } else {
-        players[playerState.index].setState(playerState);
-      }
-    }
-  }
+  Stage stage;
+  TextArea chatArea;
 
   @Override
   public void show() {
@@ -61,7 +47,40 @@ public class GameScreen extends ScreenAdapter {
       paddleTextures[i] = new Texture("paddle" + i + ".png");
     }
 
-    Gdx.input.setInputProcessor(new InputHandler());
+    stage = new Stage(new FitViewport(1280, 720));
+    var skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+
+    var messageArea = new TextArea("", skin);
+    messageArea.setSize(400, 60);
+    messageArea.setPosition(880, 0);
+    messageArea.setMaxLength(80);
+    messageArea.setFocusTraversal(false);
+    messageArea.setBlinkTime(1);
+    messageArea.setTextFieldListener(new TextField.TextFieldListener() {
+      @Override
+      public void keyTyped(TextField textField, char c) {
+        if ((c == '\r' || c == '\n') && !textField.getText().isEmpty()) {
+          connectionManager.send(textField.getText());
+          textField.setText("");
+        }
+      }
+    });
+
+    chatArea = new TextArea("", skin);
+    chatArea.setSize(400, 560);
+    chatArea.setPosition(880, 60);
+    chatArea.setFocusTraversal(false);
+    chatArea.setDisabled(true);
+
+    stage.addActor(messageArea);
+    stage.addActor(chatArea);
+    stage.setKeyboardFocus(messageArea);
+
+    var multiplexer = new InputMultiplexer();
+    multiplexer.addProcessor(new InputHandler());
+    multiplexer.addProcessor(stage);
+
+    Gdx.input.setInputProcessor(multiplexer);
   }
 
   @Override
@@ -77,6 +96,7 @@ public class GameScreen extends ScreenAdapter {
       if (player != null) player.render(batch);
     }
     batch.draw(panel, 11, 0, 5, 9);
+    stage.draw();
     batch.end();
   }
 
@@ -106,5 +126,30 @@ public class GameScreen extends ScreenAdapter {
   @Override
   public void hide() {
     connectionManager.dispose();
+  }
+
+  void setState(GameState state) {
+    ball.setState(state.ballState);
+    var stateIndexes = state.playerStates.stream().map(s -> s.index).collect(Collectors.toList());
+    var missing =
+      Arrays.stream(players).filter(p -> p != null && !stateIndexes.contains(p.index)).collect(Collectors.toList());
+    for (Player p: missing) {
+      players[p.index] = null;
+    }
+    for (PlayerState playerState: state.playerStates) {
+      if (players[playerState.index] == null) {
+        players[playerState.index] =
+          new Player(playerState.index, playerState.location, paddleTextures[playerState.index]);
+      } else {
+        players[playerState.index].setState(playerState);
+      }
+    }
+  }
+
+  void receiveChatMessage(ChatMessage message) {
+    // TODO prune old, out of frame messages
+    var m = "(" + message.timestamp + ") " + message.playerName + ":\n" + message.text;
+    chatArea.appendText(m);
+    chatArea.setCursorPosition(chatArea.getText().length() - 1);
   }
 }

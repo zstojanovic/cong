@@ -10,5 +10,6 @@ public class StateSerializer extends ManualSerializer {
     register(GameState.EXAMPLE);
     register(BallState.EXAMPLE);
     register(PlayerState.EXAMPLE);
+    register(ChatMessage.EXAMPLE);
   }
 }

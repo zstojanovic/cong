@@ -1,5 +1,6 @@
 package org.dontdroptheball.server;
 
+import org.dontdroptheball.shared.ChatMessage;
 import org.dontdroptheball.shared.GameState;
 import org.dontdroptheball.shared.KeyEvent;
 import org.dontdroptheball.shared.StateSerializer;
@@ -13,6 +14,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +25,7 @@ public class ServerConnectionManager extends WebSocketServer {
   GameServer server;
   StateSerializer serializer = new StateSerializer();
   Map<WebSocket, Player> socketMap = new HashMap<>();
+  DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
   ServerConnectionManager(GameServer server) {
     super(new InetSocketAddress(PORT));
@@ -52,7 +56,11 @@ public class ServerConnectionManager extends WebSocketServer {
 
   @Override
   public void onMessage(WebSocket socket, String message) {
-    logger.error(socket.getRemoteSocketAddress() + " unexpected message: " + message);
+    var player = socketMap.get(socket);
+    if (player != null) {
+      var chatMessage = new ChatMessage(formatter.format(LocalTime.now()), "Player" + player.index, message);
+      broadcast(serializer.serialize(chatMessage));
+    }
   }
 
   @Override

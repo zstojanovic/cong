@@ -5,6 +5,8 @@ import com.github.czyzby.websocket.WebSocket;
 import com.github.czyzby.websocket.WebSocketAdapter;
 import com.github.czyzby.websocket.WebSockets;
 import com.github.czyzby.websocket.data.WebSocketCloseCode;
+import com.github.czyzby.websocket.serialization.Transferable;
+import org.dontdroptheball.shared.ChatMessage;
 import org.dontdroptheball.shared.GameState;
 import org.dontdroptheball.shared.StateSerializer;
 
@@ -21,8 +23,12 @@ public class ClientConnectionManager extends WebSocketAdapter {
     socket.connect();
   }
 
-  void send(Object object) {
-    socket.send(serializer.serialize(object));
+  void send(Transferable<?> transferable) {
+    socket.send(serializer.serialize(transferable));
+  }
+
+  void send(String message) {
+    socket.send(message);
   }
 
   @Override
@@ -30,6 +36,8 @@ public class ClientConnectionManager extends WebSocketAdapter {
     var object = serializer.deserialize(packet);
     if (object instanceof GameState) {
       gameScreen.setState((GameState)object);
+    } else if (object instanceof ChatMessage) {
+      gameScreen.receiveChatMessage((ChatMessage)object);
     } else {
       Gdx.app.error(logTag, "Unexpected object: " + object.getClass().getCanonicalName());
     }
