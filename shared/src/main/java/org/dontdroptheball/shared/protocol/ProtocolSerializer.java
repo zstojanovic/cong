@@ -1,15 +1,17 @@
-package org.dontdroptheball.shared;
+package org.dontdroptheball.shared.protocol;
 
 import com.github.czyzby.websocket.serialization.impl.ManualSerializer;
 
-public class StateSerializer extends ManualSerializer {
+public class ProtocolSerializer extends ManualSerializer {
 
-  public StateSerializer() {
+  public ProtocolSerializer() {
     super();
     register(KeyEvent.EXAMPLE);
     register(GameState.EXAMPLE);
     register(BallState.EXAMPLE);
     register(PlayerState.EXAMPLE);
     register(ChatMessage.EXAMPLE);
+    register(NewPlayerRequest.EXAMPLE);
+    register(NewPlayerResponse.EXAMPLE);
   }
 }

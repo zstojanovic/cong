@@ -5,19 +5,21 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import org.dontdroptheball.shared.Path;
-import org.dontdroptheball.shared.PlayerState;
+import org.dontdroptheball.shared.protocol.PlayerState;
 
 public class Player {
   String logTag = Player.class.getName();
   byte index;
+  String name;
   float width = 1;
   float height = 0.3f;
   float location;
   Sprite sprite;
 
-  public Player(byte index, float location, Texture texture) {
-    this.location = location;
+  public Player(byte index, String name, float location, Texture texture) {
     this.index = index;
+    this.name = name;
+    this.location = location;
 
     sprite = new Sprite(texture);
     sprite.setSize(width, height);
@@ -27,6 +29,7 @@ public class Player {
 
   public void setState(PlayerState state) {
     location = state.location;
+    name = state.name;
     if (state.index != index) Gdx.app.error(logTag, "Illegal state sent from server");
     updateSprite();
   }

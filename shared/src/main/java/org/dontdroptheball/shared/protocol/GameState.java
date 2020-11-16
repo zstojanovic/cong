@@ -1,9 +1,10 @@
-package org.dontdroptheball.shared;
+package org.dontdroptheball.shared.protocol;
 
 import com.github.czyzby.websocket.serialization.SerializationException;
 import com.github.czyzby.websocket.serialization.Transferable;
 import com.github.czyzby.websocket.serialization.impl.Deserializer;
 import com.github.czyzby.websocket.serialization.impl.Serializer;
+import org.dontdroptheball.shared.Arena;
 
 import java.util.ArrayList;
 import java.util.Arrays;

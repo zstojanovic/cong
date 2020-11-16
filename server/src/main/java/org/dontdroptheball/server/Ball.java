@@ -2,7 +2,7 @@ package org.dontdroptheball.server;
 
 import com.badlogic.gdx.physics.box2d.*;
 import org.dontdroptheball.shared.Arena;
-import org.dontdroptheball.shared.BallState;
+import org.dontdroptheball.shared.protocol.BallState;
 
 public class Ball {
   enum Status { COUNTDOWN, PLAY }

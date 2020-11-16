@@ -11,14 +11,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import org.dontdroptheball.shared.*;
+import org.dontdroptheball.shared.protocol.*;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class GameScreen extends ScreenAdapter {
-  float WORLD_WIDTH = 16f;
-  float WORLD_HEIGHT = 9f;
-
+  Game game;
   ClientConnectionManager connectionManager;
   SpriteBatch batch;
   OrthographicCamera camera;
@@ -28,18 +27,21 @@ public class GameScreen extends ScreenAdapter {
   Ball ball = new Ball();
   Player[] players = new Player[Arena.MAX_PLAYERS];
   Texture[] paddleTextures = new Texture[Arena.MAX_PLAYERS];
-
   Stage stage;
   TextArea chatArea;
 
+  GameScreen(Game game) {
+    this.game = game;
+  }
+
   @Override
   public void show() {
-    connectionManager = new ClientConnectionManager(this);
+    connectionManager = new ClientConnectionManager(game, this);
 
-    camera = new OrthographicCamera(WORLD_WIDTH, WORLD_HEIGHT);
+    camera = new OrthographicCamera(game.WIDTH, game.HEIGHT);
     camera.position.set(camera.viewportWidth/2f, camera.viewportHeight/2f, 0);
     camera.update();
-    viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
+    viewport = new FitViewport(game.WIDTH, game.HEIGHT, camera);
     batch = new SpriteBatch();
     background = new Texture("background.png");
     panel = new Texture("panel.png");
@@ -102,8 +104,8 @@ public class GameScreen extends ScreenAdapter {
 
   @Override
   public void resize(int width, int height) {
-    camera.viewportWidth = WORLD_WIDTH;
-    camera.viewportHeight = WORLD_HEIGHT;
+    camera.viewportWidth = game.WIDTH;
+    camera.viewportHeight = game.HEIGHT;
     camera.update();
     viewport.update(width, height);
   }
@@ -139,7 +141,7 @@ public class GameScreen extends ScreenAdapter {
     for (PlayerState playerState: state.playerStates) {
       if (players[playerState.index] == null) {
         players[playerState.index] =
-          new Player(playerState.index, playerState.location, paddleTextures[playerState.index]);
+          new Player(playerState.index, playerState.name, playerState.location, paddleTextures[playerState.index]);
       } else {
         players[playerState.index].setState(playerState);
       }
@@ -148,8 +150,12 @@ public class GameScreen extends ScreenAdapter {
 
   void receiveChatMessage(ChatMessage message) {
     // TODO prune old, out of frame messages
-    var m = "(" + message.timestamp + ") " + message.playerName + ":\n" + message.text;
+    var m = "(" + message.timestamp + ") " + players[message.playerIndex].name + ":\n" + message.text;
     chatArea.appendText(m);
     chatArea.setCursorPosition(chatArea.getText().length() - 1);
+  }
+
+  void handleNewPlayerResponse(NewPlayerResponse response) {
+    // TODO
   }
 }

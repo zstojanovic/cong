@@ -6,6 +6,10 @@ import com.badlogic.gdx.backends.headless.HeadlessApplication;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import org.dontdroptheball.shared.*;
+import org.dontdroptheball.shared.protocol.GameState;
+import org.dontdroptheball.shared.protocol.KeyEvent;
+import org.dontdroptheball.shared.protocol.NewPlayerRequest;
+import org.dontdroptheball.shared.protocol.PlayerState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,15 +50,16 @@ public class GameServer extends ApplicationAdapter {
 		return new GameState(ball.getState(), playerStates);
 	}
 
-	Optional<Player> createNewPlayer() {
+	Optional<Player> createNewPlayer(NewPlayerRequest request) {
 		byte newIndex = 0;
 		while (newIndex < Arena.MAX_PLAYERS && players[newIndex] != null) newIndex++;
 		if (newIndex == Arena.MAX_PLAYERS) {
 			logger.error("Too many players");
 			return Optional.empty();
 		}
+		var name = request.name.substring(0, Math.min(request.name.length(), 10));
 		var newLocation = random.nextInt(100) * Path.LENGTH / 100;
-		var player = new Player(newIndex, newLocation, world);
+		var player = new Player(newIndex, name, newLocation, world);
 		players[newIndex] = player;
 		return Optional.of(player);
 	}

@@ -3,7 +3,7 @@ package org.dontdroptheball.client;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import org.dontdroptheball.shared.BallState;
+import org.dontdroptheball.shared.protocol.BallState;
 
 public class Ball {
   Sprite sprite;

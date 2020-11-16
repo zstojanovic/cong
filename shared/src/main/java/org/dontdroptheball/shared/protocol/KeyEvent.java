@@ -1,4 +1,4 @@
-package org.dontdroptheball.shared;
+package org.dontdroptheball.shared.protocol;
 
 import com.github.czyzby.websocket.serialization.SerializationException;
 import com.github.czyzby.websocket.serialization.Transferable;

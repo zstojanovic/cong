@@ -6,17 +6,17 @@ import com.github.czyzby.websocket.WebSocketAdapter;
 import com.github.czyzby.websocket.WebSockets;
 import com.github.czyzby.websocket.data.WebSocketCloseCode;
 import com.github.czyzby.websocket.serialization.Transferable;
-import org.dontdroptheball.shared.ChatMessage;
-import org.dontdroptheball.shared.GameState;
-import org.dontdroptheball.shared.StateSerializer;
+import org.dontdroptheball.shared.protocol.*;
 
 public class ClientConnectionManager extends WebSocketAdapter {
+  Game game;
   String logTag = ClientConnectionManager.class.getName();
   GameScreen gameScreen;
-  StateSerializer serializer = new StateSerializer();
+  ProtocolSerializer serializer = new ProtocolSerializer();
   WebSocket socket;
 
-  ClientConnectionManager(GameScreen gameScreen) {
+  ClientConnectionManager(Game game, GameScreen gameScreen) {
+    this.game = game;
     this.gameScreen = gameScreen;
     socket = WebSockets.newSocket("ws://localhost:2222");
     socket.addListener(this);
@@ -34,7 +34,9 @@ public class ClientConnectionManager extends WebSocketAdapter {
   @Override
   public boolean onMessage(WebSocket webSocket, byte[] packet) {
     var object = serializer.deserialize(packet);
-    if (object instanceof GameState) {
+    if (object instanceof NewPlayerResponse) {
+      gameScreen.handleNewPlayerResponse((NewPlayerResponse)object);
+    } else if (object instanceof GameState) {
       gameScreen.setState((GameState)object);
     } else if (object instanceof ChatMessage) {
       gameScreen.receiveChatMessage((ChatMessage)object);
@@ -52,7 +54,7 @@ public class ClientConnectionManager extends WebSocketAdapter {
 
   @Override
   public boolean onOpen(WebSocket webSocket) {
-    // TODO
+    send(new NewPlayerRequest(game.getPlayerName()));
     return FULLY_HANDLED;
   }
 

@@ -1,9 +1,6 @@
 package org.dontdroptheball.server;
 
-import org.dontdroptheball.shared.ChatMessage;
-import org.dontdroptheball.shared.GameState;
-import org.dontdroptheball.shared.KeyEvent;
-import org.dontdroptheball.shared.StateSerializer;
+import org.dontdroptheball.shared.protocol.*;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -23,7 +20,7 @@ public class ServerConnectionManager extends WebSocketServer {
   Logger logger = LoggerFactory.getLogger(GameServer.class);
   static final int PORT = 2222;
   GameServer server;
-  StateSerializer serializer = new StateSerializer();
+  ProtocolSerializer serializer = new ProtocolSerializer();
   Map<WebSocket, Player> socketMap = new HashMap<>();
   DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -36,11 +33,6 @@ public class ServerConnectionManager extends WebSocketServer {
   @Override
   public void onOpen(WebSocket socket, ClientHandshake handshake) {
     logger.info(socket.getRemoteSocketAddress() + " new connection");
-    var player = server.createNewPlayer();
-    player.ifPresent(p -> {
-      socketMap.put(socket, p);
-      logger.info("Player " + p.index + " created");
-    });
   }
 
   @Override
@@ -58,7 +50,7 @@ public class ServerConnectionManager extends WebSocketServer {
   public void onMessage(WebSocket socket, String message) {
     var player = socketMap.get(socket);
     if (player != null) {
-      var chatMessage = new ChatMessage(formatter.format(LocalTime.now()), "Player" + player.index, message);
+      var chatMessage = new ChatMessage(formatter.format(LocalTime.now()), player.index, message);
       broadcast(serializer.serialize(chatMessage));
     }
   }
@@ -66,8 +58,19 @@ public class ServerConnectionManager extends WebSocketServer {
   @Override
   public void onMessage(WebSocket socket, ByteBuffer message) {
     Object object = serializer.deserialize(message.array());
-    if (object instanceof KeyEvent) {
-      server.handleKeyEvent(socketMap.get(socket), (KeyEvent)object);
+    var player = socketMap.get(socket);
+    if (object instanceof NewPlayerRequest) {
+      var newPlayer = server.createNewPlayer((NewPlayerRequest)object);
+      newPlayer.ifPresent(p -> {
+        socket.send(serializer.serialize(new NewPlayerResponse(p.index)));
+        socketMap.put(socket, p);
+        logger.info("Player " + p.index + " created");
+      });
+    } else if (player == null) {
+      logger.error(socket.getRemoteSocketAddress() +
+        " received object from connection without Player" + object.getClass().getCanonicalName());
+    } else if (object instanceof KeyEvent) {
+      server.handleKeyEvent(player, (KeyEvent)object);
     } else {
       logger.error(socket.getRemoteSocketAddress() + " unexpected object: " + object.getClass().getCanonicalName());
     }

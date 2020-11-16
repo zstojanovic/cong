@@ -2,12 +2,13 @@ package org.dontdroptheball.server;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.*;
-import org.dontdroptheball.shared.KeyEvent;
 import org.dontdroptheball.shared.Path;
-import org.dontdroptheball.shared.PlayerState;
+import org.dontdroptheball.shared.protocol.KeyEvent;
+import org.dontdroptheball.shared.protocol.PlayerState;
 
 public class Player {
   byte index;
+  String name;
   World world;
   float location;
   float maxSpeed = 5;
@@ -16,8 +17,9 @@ public class Player {
   Body body;
   float currentSpeed = 0;
 
-  public Player(byte index, float location, World world) {
+  public Player(byte index, String name, float location, World world) {
     this.index = index;
+    this.name = name;
     this.location = location;
     this.world = world;
 
@@ -26,7 +28,7 @@ public class Player {
   }
 
   public PlayerState getState() {
-    return new PlayerState(index, location);
+    return new PlayerState(index, name, location);
   }
 
   private Body createBody() {
