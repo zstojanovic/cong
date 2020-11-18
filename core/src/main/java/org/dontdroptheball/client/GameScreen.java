@@ -1,14 +1,17 @@
 package org.dontdroptheball.client;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import org.dontdroptheball.shared.*;
 import org.dontdroptheball.shared.protocol.*;
@@ -29,6 +32,8 @@ public class GameScreen extends ScreenAdapter {
   Texture[] paddleTextures = new Texture[Arena.MAX_PLAYERS];
   Stage stage;
   TextArea chatArea;
+  Label scoreLabel;
+  Label recordLabel;
 
   GameScreen(Game game) {
     this.game = game;
@@ -58,22 +63,32 @@ public class GameScreen extends ScreenAdapter {
     messageArea.setMaxLength(80);
     messageArea.setFocusTraversal(false);
     messageArea.setBlinkTime(1);
-    messageArea.setTextFieldListener(new TextField.TextFieldListener() {
-      @Override
-      public void keyTyped(TextField textField, char c) {
-        if ((c == '\r' || c == '\n') && !textField.getText().isEmpty()) {
-          connectionManager.send(textField.getText());
-          textField.setText("");
-        }
+    messageArea.setTextFieldListener((field, c) -> {
+      if ((c == '\r' || c == '\n') && !field.getText().isEmpty()) {
+        connectionManager.send(field.getText());
+        field.setText("");
       }
     });
 
     chatArea = new TextArea("", skin);
-    chatArea.setSize(400, 560);
+    chatArea.setSize(400, 524);
     chatArea.setPosition(880, 60);
     chatArea.setFocusTraversal(false);
     chatArea.setDisabled(true);
 
+    var style = new Label.LabelStyle(new BitmapFont(Gdx.files.internal("ui/nimbus-sans-l-bold-24.fnt")), Color.BLACK);
+    scoreLabel = new Label("", style);
+    scoreLabel.setAlignment(Align.center);
+    scoreLabel.setWidth(88);
+    scoreLabel.setPosition(896, 647);
+
+    recordLabel = new Label("", style);
+    recordLabel.setAlignment(Align.center);
+    recordLabel.setWidth(88);
+    recordLabel.setPosition(896, 615);
+
+    stage.addActor(scoreLabel);
+    stage.addActor(recordLabel);
     stage.addActor(messageArea);
     stage.addActor(chatArea);
     stage.setKeyboardFocus(messageArea);
@@ -98,8 +113,8 @@ public class GameScreen extends ScreenAdapter {
       if (player != null) player.render(batch);
     }
     batch.draw(panel, 11, 0, 5, 9);
-    stage.draw();
     batch.end();
+    stage.draw();
   }
 
   @Override
@@ -132,6 +147,8 @@ public class GameScreen extends ScreenAdapter {
 
   void setState(GameState state) {
     ball.setState(state.ballState);
+    scoreLabel.setText(String.valueOf((int)state.ballState.playTimer));
+    recordLabel.setText(String.valueOf((int)state.ballState.record));
     var stateIndexes = state.playerStates.stream().map(s -> s.index).collect(Collectors.toList());
     var missing =
       Arrays.stream(players).filter(p -> p != null && !stateIndexes.contains(p.index)).collect(Collectors.toList());

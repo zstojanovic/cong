@@ -1,5 +1,8 @@
 package org.dontdroptheball.server;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.*;
 import org.dontdroptheball.shared.Arena;
 import org.dontdroptheball.shared.protocol.BallState;
@@ -7,26 +10,35 @@ import org.dontdroptheball.shared.protocol.BallState;
 public class Ball {
   enum Status { COUNTDOWN, PLAY }
 
+  Preferences preferences;
   Status status = Status.COUNTDOWN;
   World world;
   float diameter = 0.5f;
   Body body;
   float countdownTimer;
   float playTimer;
+  float record;
 
   public Ball(World world) {
     this.world = world;
+    preferences = Gdx.app.getPreferences("dontdroptheball-server");
+    record = preferences.getFloat("record");
     body = createBody();
     startCountdown();
   }
 
   public BallState getState() {
-    return new BallState(body.getPosition().x, body.getPosition().y);
+    return new BallState(body.getPosition().x, body.getPosition().y, playTimer, record);
   }
 
   private void startCountdown() {
     status = Status.COUNTDOWN;
     countdownTimer = 3;
+    if (playTimer > record) {
+      record = playTimer;
+      preferences.putFloat("record", record);
+      preferences.flush();
+    }
     body.setTransform(Arena.WIDTH/2, Arena.HEIGHT/2, 0);
     body.setLinearVelocity(0, 0);
   }
@@ -34,7 +46,8 @@ public class Ball {
   private void startPlaying() {
     status = Status.PLAY;
     playTimer = 0;
-    body.setLinearVelocity(1.5f, 1.5f);
+    var direction = MathUtils.random() * MathUtils.PI2;
+    body.setLinearVelocity(MathUtils.cos(direction) * 2.5f, MathUtils.sin(direction) * 2.5f);
   }
 
   private Body createBody() {
