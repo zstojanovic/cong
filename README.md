@@ -4,5 +4,4 @@ A work in progress experimental not so massively multiplayer online cooperative 
 
 ### TODO
 - proper player limit handling
-- scoring
 - "power-ups"

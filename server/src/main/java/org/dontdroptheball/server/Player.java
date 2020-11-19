@@ -28,7 +28,7 @@ public class Player {
   }
 
   public PlayerState getState() {
-    return new PlayerState(index, name, location);
+    return new PlayerState(index, location);
   }
 
   private Body createBody() {

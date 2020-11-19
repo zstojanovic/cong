@@ -13,5 +13,6 @@ public class ProtocolSerializer extends ManualSerializer {
     register(ChatMessage.EXAMPLE);
     register(NewPlayerRequest.EXAMPLE);
     register(NewPlayerResponse.EXAMPLE);
+    register(NewPlayerAnnouncement.EXAMPLE);
   }
 }

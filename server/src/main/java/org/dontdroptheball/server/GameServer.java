@@ -3,6 +3,7 @@ package org.dontdroptheball.server;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.headless.HeadlessApplication;
+import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import org.dontdroptheball.shared.*;
@@ -39,7 +40,7 @@ public class GameServer extends ApplicationAdapter {
 		for (Player player: players) {
 			if (player != null) player.step(delta);
 		}
-		socketManager.broadcastState(getState());
+		socketManager.broadcast(getState());
 	}
 
 	private GameState getState() {
@@ -74,6 +75,8 @@ public class GameServer extends ApplicationAdapter {
 	}
 
 	public static void main(String[] args) {
-		new HeadlessApplication(new GameServer());
+		var config = new HeadlessApplicationConfiguration();
+		config.renderInterval = 1 / 30f;
+		new HeadlessApplication(new GameServer(), config);
 	}
 }

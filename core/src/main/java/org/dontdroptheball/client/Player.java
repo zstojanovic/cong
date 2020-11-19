@@ -29,7 +29,6 @@ public class Player {
 
   public void setState(PlayerState state) {
     location = state.location;
-    name = state.name;
     if (state.index != index) Gdx.app.error(logTag, "Illegal state sent from server");
     updateSprite();
   }

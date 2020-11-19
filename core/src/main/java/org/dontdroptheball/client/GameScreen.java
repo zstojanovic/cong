@@ -41,8 +41,6 @@ public class GameScreen extends ScreenAdapter {
 
   @Override
   public void show() {
-    connectionManager = new ClientConnectionManager(game, this);
-
     camera = new OrthographicCamera(game.WIDTH, game.HEIGHT);
     camera.position.set(camera.viewportWidth/2f, camera.viewportHeight/2f, 0);
     camera.update();
@@ -98,6 +96,7 @@ public class GameScreen extends ScreenAdapter {
     multiplexer.addProcessor(stage);
 
     Gdx.input.setInputProcessor(multiplexer);
+    connectionManager = new ClientConnectionManager(game, this);
   }
 
   @Override
@@ -155,12 +154,12 @@ public class GameScreen extends ScreenAdapter {
     for (Player p: missing) {
       players[p.index] = null;
     }
-    for (PlayerState playerState: state.playerStates) {
-      if (players[playerState.index] == null) {
-        players[playerState.index] =
-          new Player(playerState.index, playerState.name, playerState.location, paddleTextures[playerState.index]);
+    for (PlayerState p: state.playerStates) {
+      if (players[p.index] == null) {
+        players[p.index] =
+          new Player(p.index, "Player" + p.index, p.location, paddleTextures[p.index]);
       } else {
-        players[playerState.index].setState(playerState);
+        players[p.index].setState(p);
       }
     }
   }
@@ -169,7 +168,15 @@ public class GameScreen extends ScreenAdapter {
     // TODO prune old, out of frame messages
     var m = "(" + message.timestamp + ") " + players[message.playerIndex].name + ":\n" + message.text;
     chatArea.appendText(m);
-    chatArea.setCursorPosition(chatArea.getText().length() - 1);
+  }
+
+  void handleNewPlayerAnnouncement(NewPlayerAnnouncement announcement) {
+    if (players[announcement.index] == null) {
+      players[announcement.index] =
+        new Player(announcement.index, announcement.name, 0, paddleTextures[announcement.index]);
+    } else {
+      players[announcement.index].name = announcement.name;
+    }
   }
 
   void handleNewPlayerResponse(NewPlayerResponse response) {

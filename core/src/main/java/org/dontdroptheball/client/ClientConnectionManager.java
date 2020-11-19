@@ -18,7 +18,7 @@ public class ClientConnectionManager extends WebSocketAdapter {
   ClientConnectionManager(Game game, GameScreen gameScreen) {
     this.game = game;
     this.gameScreen = gameScreen;
-    socket = WebSockets.newSocket("ws://localhost:2222");
+    socket = WebSockets.newSocket("ws://localhost:2718");
     socket.addListener(this);
     socket.connect();
   }
@@ -36,6 +36,8 @@ public class ClientConnectionManager extends WebSocketAdapter {
     var object = serializer.deserialize(packet);
     if (object instanceof NewPlayerResponse) {
       gameScreen.handleNewPlayerResponse((NewPlayerResponse)object);
+    } else if (object instanceof NewPlayerAnnouncement) {
+      gameScreen.handleNewPlayerAnnouncement((NewPlayerAnnouncement)object);
     } else if (object instanceof GameState) {
       gameScreen.setState((GameState)object);
     } else if (object instanceof ChatMessage) {

@@ -1,5 +1,6 @@
 package org.dontdroptheball.server;
 
+import com.github.czyzby.websocket.serialization.Transferable;
 import org.dontdroptheball.shared.protocol.*;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 public class ServerConnectionManager extends WebSocketServer {
   Logger logger = LoggerFactory.getLogger(GameServer.class);
-  static final int PORT = 2222;
+  static final int PORT = 2718;
   GameServer server;
   ProtocolSerializer serializer = new ProtocolSerializer();
   Map<WebSocket, Player> socketMap = new HashMap<>();
@@ -63,6 +64,7 @@ public class ServerConnectionManager extends WebSocketServer {
       var newPlayer = server.createNewPlayer((NewPlayerRequest)object);
       newPlayer.ifPresent(p -> {
         socket.send(serializer.serialize(new NewPlayerResponse(p.index)));
+        broadcast(new NewPlayerAnnouncement(p.index, p.name));
         socketMap.put(socket, p);
         logger.info("Player " + p.index + " created");
       });
@@ -92,7 +94,7 @@ public class ServerConnectionManager extends WebSocketServer {
     setConnectionLostTimeout(100);
   }
 
-  void broadcastState(GameState state) {
-    broadcast(serializer.serialize(state));
+  void broadcast(Transferable<?> transferable) {
+    broadcast(serializer.serialize(transferable));
   }
 }
