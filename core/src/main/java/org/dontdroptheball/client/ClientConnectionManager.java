@@ -18,7 +18,7 @@ public class ClientConnectionManager extends WebSocketAdapter {
   ClientConnectionManager(Game game, GameScreen gameScreen) {
     this.game = game;
     this.gameScreen = gameScreen;
-    socket = WebSockets.newSocket("ws://localhost:2718");
+    socket = WebSockets.newSocket(game.config.get("serverUrl"));
     socket.addListener(this);
     socket.connect();
   }

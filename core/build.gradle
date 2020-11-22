@@ -7,3 +7,22 @@ dependencies {
 	api "com.github.czyzby:gdx-websocket:$websocketVersion"
 	api project(':shared')
 }
+
+task copyConfig {
+	def configFile
+	if (project.hasProperty("env")) {
+		configFile = rootProject.file("config.${env}.properties")
+	} else {
+		configFile = rootProject.file("config.local.properties")
+	}
+	assert file(configFile).exists()
+	doLast {
+		copy {
+			from configFile
+			into rootProject.file("assets")
+			rename ".*", "config.properties"
+		}
+	}
+}
+
+tasks.compileJava.dependsOn(copyConfig)

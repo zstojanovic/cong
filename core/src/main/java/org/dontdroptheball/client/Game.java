@@ -7,10 +7,13 @@ public class Game extends com.badlogic.gdx.Game {
   final float WIDTH = 16;
   final float HEIGHT = 9;
   Preferences preferences;
+  Config config;
 
   @Override
   public void create() {
     preferences = Gdx.app.getPreferences("dontdroptheball");
+    config = new Config();
+    config.load(Gdx.files.internal("config.properties"));
     setScreen(new TitleScreen(this));
   }
 

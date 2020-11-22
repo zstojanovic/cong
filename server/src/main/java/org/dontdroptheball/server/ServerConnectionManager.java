@@ -28,6 +28,7 @@ public class ServerConnectionManager extends WebSocketServer {
   ServerConnectionManager(GameServer server) {
     super(new InetSocketAddress(PORT));
     this.server = server;
+    setTcpNoDelay(true);
     start();
   }
 

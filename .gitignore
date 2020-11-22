@@ -68,3 +68,6 @@ nb-configuration.xml
 *~
 *.*#
 *#*#
+
+config.properties
+config.prod.properties
