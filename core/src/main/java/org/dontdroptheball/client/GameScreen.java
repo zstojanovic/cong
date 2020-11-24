@@ -166,7 +166,12 @@ public class GameScreen extends ScreenAdapter {
 
   void receiveChatMessage(ChatMessage message) {
     // TODO prune old, out of frame messages
-    var m = "(" + message.timestamp + ") " + players[message.playerIndex].name + ":\n" + message.text;
+    String m;
+    if (message.isServerMessage()) {
+      m = "[" + message.timestamp + "] >>> " + message.text;
+    } else {
+      m = "(" + message.timestamp + ") " + players[message.playerIndex].name + ":\n" + message.text;
+    }
     chatArea.appendText(m);
   }
 

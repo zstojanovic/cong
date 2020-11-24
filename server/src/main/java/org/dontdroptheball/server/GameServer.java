@@ -7,17 +7,18 @@ import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import org.dontdroptheball.shared.*;
-import org.dontdroptheball.shared.protocol.GameState;
-import org.dontdroptheball.shared.protocol.KeyEvent;
-import org.dontdroptheball.shared.protocol.NewPlayerRequest;
-import org.dontdroptheball.shared.protocol.PlayerState;
+import org.dontdroptheball.shared.protocol.*;
+import org.java_websocket.WebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class GameServer extends ApplicationAdapter {
 	Logger logger = LoggerFactory.getLogger(GameServer.class);
+	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 	ServerConnectionManager socketManager;
 	World world;
 	Ball ball;
@@ -51,7 +52,7 @@ public class GameServer extends ApplicationAdapter {
 		return new GameState(ball.getState(), playerStates);
 	}
 
-	Optional<Player> createNewPlayer(NewPlayerRequest request) {
+	Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {
 		byte newIndex = 0;
 		while (newIndex < Arena.MAX_PLAYERS && players[newIndex] != null) newIndex++;
 		if (newIndex == Arena.MAX_PLAYERS) {
@@ -62,10 +63,23 @@ public class GameServer extends ApplicationAdapter {
 		var newLocation = random.nextInt(100) * Path.LENGTH / 100;
 		var player = new Player(newIndex, name, newLocation, world);
 		players[newIndex] = player;
+		socketManager.send(socket, new NewPlayerResponse(player.index));
+		socketManager.broadcast(new NewPlayerAnnouncement(player.index, player.name));
+		socketManager.broadcast(new ChatMessage(getTimestamp(), player.name + " joined the game\n"));
 		return Optional.of(player);
 	}
 
+	void handleMessage(Player player, String message) {
+		var chatMessage = new ChatMessage(getTimestamp(), player.index, message);
+		socketManager.broadcast(chatMessage);
+	}
+
+	private String getTimestamp() {
+		return formatter.format(LocalTime.now());
+	}
+
 	void disconnectPlayer(Player player) {
+		socketManager.broadcast(new ChatMessage(getTimestamp(), player.name + " left the game\n"));
 		players[player.index] = null;
 		player.dispose();
 	}

@@ -12,8 +12,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,7 +21,6 @@ public class ServerConnectionManager extends WebSocketServer {
   GameServer server;
   ProtocolSerializer serializer = new ProtocolSerializer();
   Map<WebSocket, Player> socketMap = new HashMap<>();
-  DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
   ServerConnectionManager(GameServer server) {
     super(new InetSocketAddress(PORT));
@@ -52,8 +49,9 @@ public class ServerConnectionManager extends WebSocketServer {
   public void onMessage(WebSocket socket, String message) {
     var player = socketMap.get(socket);
     if (player != null) {
-      var chatMessage = new ChatMessage(formatter.format(LocalTime.now()), player.index, message);
-      broadcast(serializer.serialize(chatMessage));
+      server.handleMessage(player, message);
+    } else {
+      logger.error("Unknown socket (" + socket + ") sent message: " + message);
     }
   }
 
@@ -62,10 +60,8 @@ public class ServerConnectionManager extends WebSocketServer {
     Object object = serializer.deserialize(message.array());
     var player = socketMap.get(socket);
     if (object instanceof NewPlayerRequest) {
-      var newPlayer = server.createNewPlayer((NewPlayerRequest)object);
+      var newPlayer = server.createNewPlayer((NewPlayerRequest)object, socket);
       newPlayer.ifPresent(p -> {
-        socket.send(serializer.serialize(new NewPlayerResponse(p.index)));
-        broadcast(new NewPlayerAnnouncement(p.index, p.name));
         socketMap.put(socket, p);
         logger.info("Player " + p.index + " created");
       });
@@ -97,5 +93,9 @@ public class ServerConnectionManager extends WebSocketServer {
 
   void broadcast(Transferable<?> transferable) {
     broadcast(serializer.serialize(transferable));
+  }
+
+  void send(WebSocket socket, Transferable<?> transferable) {
+    socket.send(serializer.serialize(transferable));
   }
 }
