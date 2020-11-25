@@ -175,12 +175,16 @@ public class GameScreen extends ScreenAdapter {
     chatArea.appendText(m);
   }
 
-  void handleNewPlayerAnnouncement(NewPlayerAnnouncement announcement) {
-    if (players[announcement.index] == null) {
-      players[announcement.index] =
-        new Player(announcement.index, announcement.name, 0, paddleTextures[announcement.index]);
-    } else {
-      players[announcement.index].name = announcement.name;
+  void handlePlayerNames(PlayerNames playerNames) {
+    for (byte i = 0; i < Arena.MAX_PLAYERS; i++) {
+      var name = playerNames.names[i];
+      if (name != null) {
+        if (players[i] == null) {
+          players[i] = new Player(i, name, 0, paddleTextures[i]);
+        } else {
+          players[i].name = name;
+        }
+      }
     }
   }
 

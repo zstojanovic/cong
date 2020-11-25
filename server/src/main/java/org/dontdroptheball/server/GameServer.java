@@ -63,8 +63,11 @@ public class GameServer extends ApplicationAdapter {
 		var newLocation = random.nextInt(100) * Path.LENGTH / 100;
 		var player = new Player(newIndex, name, newLocation, world);
 		players[newIndex] = player;
+		var names = new String[Arena.MAX_PLAYERS];
+		for (int i = 0; i < Arena.MAX_PLAYERS; i++)
+			names[i] = players[i] == null ? null : players[i].name;
 		socketManager.send(socket, new NewPlayerResponse(player.index));
-		socketManager.broadcast(new NewPlayerAnnouncement(player.index, player.name));
+		socketManager.broadcast(new PlayerNames(names));
 		socketManager.broadcast(new ChatMessage(getTimestamp(), player.name + " joined the game\n"));
 		return Optional.of(player);
 	}

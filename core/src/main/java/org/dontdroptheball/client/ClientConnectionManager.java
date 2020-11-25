@@ -36,8 +36,8 @@ public class ClientConnectionManager extends WebSocketAdapter {
     var object = serializer.deserialize(packet);
     if (object instanceof NewPlayerResponse) {
       gameScreen.handleNewPlayerResponse((NewPlayerResponse)object);
-    } else if (object instanceof NewPlayerAnnouncement) {
-      gameScreen.handleNewPlayerAnnouncement((NewPlayerAnnouncement)object);
+    } else if (object instanceof PlayerNames) {
+      gameScreen.handlePlayerNames((PlayerNames)object);
     } else if (object instanceof GameState) {
       gameScreen.setState((GameState)object);
     } else if (object instanceof ChatMessage) {

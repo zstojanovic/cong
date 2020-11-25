@@ -11,8 +11,8 @@ public class ProtocolSerializer extends ManualSerializer {
     register(BallState.EXAMPLE);
     register(PlayerState.EXAMPLE);
     register(ChatMessage.EXAMPLE);
+    register(PlayerNames.EXAMPLE);
     register(NewPlayerRequest.EXAMPLE);
     register(NewPlayerResponse.EXAMPLE);
-    register(NewPlayerAnnouncement.EXAMPLE);
   }
 }
