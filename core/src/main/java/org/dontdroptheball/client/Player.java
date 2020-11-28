@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import org.dontdroptheball.shared.Path;
+import org.dontdroptheball.shared.Const.Path;
 import org.dontdroptheball.shared.protocol.PlayerState;
 
 public class Player {

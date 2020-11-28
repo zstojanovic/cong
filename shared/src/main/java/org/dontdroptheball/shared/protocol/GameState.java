@@ -4,7 +4,7 @@ import com.github.czyzby.websocket.serialization.SerializationException;
 import com.github.czyzby.websocket.serialization.Transferable;
 import com.github.czyzby.websocket.serialization.impl.Deserializer;
 import com.github.czyzby.websocket.serialization.impl.Serializer;
-import org.dontdroptheball.shared.Arena;
+import org.dontdroptheball.shared.Const;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,7 +33,7 @@ public class GameState implements Transferable<GameState> {
     var state = new GameState();
     state.ballState = deserializer.deserializeTransferable(BallState.EXAMPLE);
     state.playerStates = new ArrayList<>();
-    var playerStatesArray = new PlayerState[Arena.MAX_PLAYERS];
+    var playerStatesArray = new PlayerState[Const.MAX_PLAYERS];
     var length = deserializer.deserializeTransferableArray(playerStatesArray, PlayerState.EXAMPLE);
     state.playerStates.addAll(Arrays.asList(playerStatesArray).subList(0, length));
     return state;

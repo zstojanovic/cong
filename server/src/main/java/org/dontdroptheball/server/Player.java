@@ -2,7 +2,7 @@ package org.dontdroptheball.server;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.*;
-import org.dontdroptheball.shared.Path;
+import org.dontdroptheball.shared.Const.Path;
 import org.dontdroptheball.shared.protocol.KeyEvent;
 import org.dontdroptheball.shared.protocol.PlayerState;
 

@@ -28,8 +28,8 @@ public class GameScreen extends ScreenAdapter {
   Texture background;
   Texture panel;
   Ball ball = new Ball();
-  Player[] players = new Player[Arena.MAX_PLAYERS];
-  Texture[] paddleTextures = new Texture[Arena.MAX_PLAYERS];
+  Player[] players = new Player[Const.MAX_PLAYERS];
+  Texture[] paddleTextures = new Texture[Const.MAX_PLAYERS];
   Stage stage;
   TextArea chatArea;
   Label scoreLabel;
@@ -48,7 +48,7 @@ public class GameScreen extends ScreenAdapter {
     batch = new SpriteBatch();
     background = new Texture("background.png");
     panel = new Texture("panel.png");
-    for (int i = 0; i < Arena.MAX_PLAYERS; i++) {
+    for (int i = 0; i < Const.MAX_PLAYERS; i++) {
       paddleTextures[i] = new Texture("paddle" + i + ".png");
     }
 
@@ -165,18 +165,22 @@ public class GameScreen extends ScreenAdapter {
   }
 
   void receiveChatMessage(ChatMessage message) {
-    // TODO prune old, out of frame messages
     String m;
     if (message.isServerMessage()) {
       m = "[" + message.timestamp + "] >>> " + message.text;
     } else {
       m = "(" + message.timestamp + ") " + players[message.playerIndex].name + ":\n" + message.text;
     }
-    chatArea.appendText(m);
+    var appended = chatArea.getText() + m;
+    var newText = new StringBuilder();
+    var skipCount = Math.max(0, appended.lines().count() - (Const.MESSAGE_LIMIT * 2));
+    appended.lines().skip(skipCount).forEach(s -> newText.append(s).append("\n"));
+    chatArea.setText(newText.toString());
+    chatArea.setCursorPosition(newText.length());
   }
 
   void handlePlayerNames(PlayerNames playerNames) {
-    for (byte i = 0; i < Arena.MAX_PLAYERS; i++) {
+    for (byte i = 0; i < Const.MAX_PLAYERS; i++) {
       var name = playerNames.names[i];
       if (name != null) {
         if (players[i] == null) {
@@ -189,6 +193,9 @@ public class GameScreen extends ScreenAdapter {
   }
 
   void handleNewPlayerResponse(NewPlayerResponse response) {
-    // TODO
+    // TODO make some use of response.index or remove it from protocol
+    for (ChatMessage message: response.messages) {
+      receiveChatMessage(message);
+    }
   }
 }

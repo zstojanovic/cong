@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.*;
-import org.dontdroptheball.shared.Arena;
+import org.dontdroptheball.shared.Const;
 import org.dontdroptheball.shared.protocol.BallState;
 
 public class Ball {
@@ -39,7 +39,7 @@ public class Ball {
       preferences.putFloat("record", record);
       preferences.flush();
     }
-    body.setTransform(Arena.WIDTH/2, Arena.HEIGHT/2, 0);
+    body.setTransform(Const.WIDTH/2, Const.HEIGHT/2, 0);
     body.setLinearVelocity(0, 0);
   }
 
@@ -72,8 +72,8 @@ public class Ball {
       if (countdownTimer <= 0) startPlaying();
     } else {
       var dropped =
-        body.getPosition().x < -diameter || body.getPosition().x > (Arena.WIDTH + diameter) ||
-        body.getPosition().y < -diameter || body.getPosition().y > (Arena.HEIGHT + diameter);
+        body.getPosition().x < -diameter || body.getPosition().x > (Const.WIDTH + diameter) ||
+        body.getPosition().y < -diameter || body.getPosition().y > (Const.HEIGHT + diameter);
       if (dropped) {
         startCountdown();
       } else {

@@ -22,8 +22,9 @@ public class GameServer extends ApplicationAdapter {
 	ServerConnectionManager socketManager;
 	World world;
 	Ball ball;
-	Player[] players = new Player[Arena.MAX_PLAYERS];
+	Player[] players = new Player[Const.MAX_PLAYERS];
 	Random random = new Random();
+	Queue<ChatMessage> chatQueue = new LinkedList<>();
 
 	@Override
 	public void create() {
@@ -45,7 +46,7 @@ public class GameServer extends ApplicationAdapter {
 	}
 
 	private GameState getState() {
-		var playerStates = new ArrayList<PlayerState>(Arena.MAX_PLAYERS);
+		var playerStates = new ArrayList<PlayerState>(Const.MAX_PLAYERS);
 		for (Player player: players) {
 			if (player != null) playerStates.add(player.getState());
 		}
@@ -54,26 +55,31 @@ public class GameServer extends ApplicationAdapter {
 
 	Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {
 		byte newIndex = 0;
-		while (newIndex < Arena.MAX_PLAYERS && players[newIndex] != null) newIndex++;
-		if (newIndex == Arena.MAX_PLAYERS) {
+		while (newIndex < Const.MAX_PLAYERS && players[newIndex] != null) newIndex++;
+		if (newIndex == Const.MAX_PLAYERS) {
 			logger.error("Too many players");
 			return Optional.empty();
 		}
 		var name = request.name.substring(0, Math.min(request.name.length(), 10));
-		var newLocation = random.nextInt(100) * Path.LENGTH / 100;
+		var newLocation = random.nextInt(100) * Const.Path.LENGTH / 100;
 		var player = new Player(newIndex, name, newLocation, world);
 		players[newIndex] = player;
-		var names = new String[Arena.MAX_PLAYERS];
-		for (int i = 0; i < Arena.MAX_PLAYERS; i++)
+		var names = new String[Const.MAX_PLAYERS];
+		for (int i = 0; i < Const.MAX_PLAYERS; i++)
 			names[i] = players[i] == null ? null : players[i].name;
-		socketManager.send(socket, new NewPlayerResponse(player.index));
 		socketManager.broadcast(new PlayerNames(names));
-		socketManager.broadcast(new ChatMessage(getTimestamp(), player.name + " joined the game\n"));
+		socketManager.send(socket, new NewPlayerResponse(player.index, chatQueue.toArray(ChatMessage[]::new)));
+		handleMessage(new ChatMessage(getTimestamp(), player.name + " joined the game\n"));
 		return Optional.of(player);
 	}
 
 	void handleMessage(Player player, String message) {
-		var chatMessage = new ChatMessage(getTimestamp(), player.index, message);
+		handleMessage(new ChatMessage(getTimestamp(), player.index, message));
+	}
+
+	void handleMessage(ChatMessage chatMessage) {
+		chatQueue.add(chatMessage);
+		if (chatQueue.size() > Const.MESSAGE_LIMIT) chatQueue.remove();
 		socketManager.broadcast(chatMessage);
 	}
 
