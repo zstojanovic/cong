@@ -2,9 +2,15 @@ package org.dontdroptheball.server;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.*;
+import org.dontdroptheball.shared.Const;
 import org.dontdroptheball.shared.Const.Path;
-import org.dontdroptheball.shared.protocol.KeyEvent;
-import org.dontdroptheball.shared.protocol.PlayerState;
+import org.dontdroptheball.shared.protocol.*;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class Player {
   byte index;
@@ -17,7 +23,22 @@ public class Player {
   Body body;
   float currentSpeed = 0;
 
-  public Player(byte index, String name, float location, World world) {
+  private static Player[] players = new Player[Const.MAX_PLAYERS];
+
+  public static Optional<Player> create(String name, World world) {
+    byte newIndex = 0;
+    while (newIndex < Const.MAX_PLAYERS && players[newIndex] != null) newIndex++;
+    if (newIndex == Const.MAX_PLAYERS) return Optional.empty();
+    var player = new Player(newIndex, name.substring(0, Math.min(name.length(), 10)), MathUtils.random(0f, Path.LENGTH), world);
+    players[newIndex] = player;
+    return Optional.of(player);
+  }
+
+  public static List<Player> all() {
+    return Arrays.stream(players).filter(Objects::nonNull).collect(Collectors.toList());
+  }
+
+  private Player(byte index, String name, float location, World world) {
     this.index = index;
     this.name = name;
     this.location = location;
@@ -81,6 +102,7 @@ public class Player {
   }
 
   public void dispose() {
+    players[index] = null;
     world.destroyBody(body);
   }
 }

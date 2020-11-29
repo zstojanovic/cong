@@ -24,8 +24,6 @@ public class GameServer extends ApplicationAdapter {
 	ServerConnectionManager socketManager;
 	World world;
 	Ball ball;
-	Player[] players = new Player[Const.MAX_PLAYERS];
-	Random random = new Random();
 	Queue<ChatMessage> chatQueue = new LinkedList<>();
 
 	@Override
@@ -41,38 +39,26 @@ public class GameServer extends ApplicationAdapter {
 		var delta = Gdx.graphics.getDeltaTime();
 		world.step(delta, 6, 2);
 		ball.step(delta);
-		for (Player player: players) {
-			if (player != null) player.step(delta);
-		}
+		Player.all().forEach(p -> p.step(delta));
 		socketManager.broadcast(getState());
 	}
 
 	private GameState getState() {
-		var playerStates = new ArrayList<PlayerState>(Const.MAX_PLAYERS);
-		for (Player player: players) {
-			if (player != null) playerStates.add(player.getState());
-		}
-		return new GameState(ball.getState(), playerStates);
+		return new GameState(
+			ball.getState(),
+			Player.all().stream().map(Player::getState).collect(Collectors.toList()));
 	}
 
 	Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {
-		byte newIndex = 0;
-		while (newIndex < Const.MAX_PLAYERS && players[newIndex] != null) newIndex++;
-		if (newIndex == Const.MAX_PLAYERS) {
-			logger.error("Too many players");
-			return Optional.empty();
-		}
-		var name = request.name.substring(0, Math.min(request.name.length(), 10));
-		var newLocation = random.nextInt(100) * Const.Path.LENGTH / 100;
-		var player = new Player(newIndex, name, newLocation, world);
-		players[newIndex] = player;
-		var names = new String[Const.MAX_PLAYERS];
-		for (int i = 0; i < Const.MAX_PLAYERS; i++)
-			names[i] = players[i] == null ? null : players[i].name;
-		socketManager.broadcast(new PlayerNames(names));
-		socketManager.send(socket, new NewPlayerResponse(player.index, chatQueue.toArray(ChatMessage[]::new)));
-		handleMessage(new ChatMessage(getTimestamp(), player.name + " joined the game\n"));
-		return Optional.of(player);
+		var player = Player.create(request.name, world);
+		if (player.isEmpty()) logger.error("Too many players");
+		player.ifPresent(p -> {
+			var names = Player.all().stream().map(a -> a.name).toArray(String[]::new);
+			socketManager.broadcast(new PlayerNames(names));
+			socketManager.send(socket, new NewPlayerResponse(p.index, chatQueue.toArray(ChatMessage[]::new)));
+			handleMessage(new ChatMessage(getTimestamp(), p.name + " joined the game\n"));
+		});
+		return player;
 	}
 
 	void handleMessage(Player player, String message) {
@@ -91,7 +77,6 @@ public class GameServer extends ApplicationAdapter {
 
 	void disconnectPlayer(Player player) {
 		socketManager.broadcast(new ChatMessage(getTimestamp(), player.name + " left the game\n"));
-		players[player.index] = null;
 		player.dispose();
 	}
 
@@ -100,9 +85,9 @@ public class GameServer extends ApplicationAdapter {
 	}
 
 	Optional<Player> getRandomPlayer() {
-		var active = Arrays.stream(players).filter(Objects::nonNull).toArray();
-		if (active.length == 0) return Optional.empty();
-		return Optional.of((Player)active[MathUtils.random(active.length - 1)]);
+		var players = Player.all();
+		if (players.size() == 0) return Optional.empty();
+		return Optional.of(players.get(MathUtils.random(players.size() - 1)));
 	}
 
 	public static void main(String[] args) {
