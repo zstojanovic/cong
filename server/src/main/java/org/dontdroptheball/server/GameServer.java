@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.headless.HeadlessApplication;
 import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.World;
 import org.dontdroptheball.shared.*;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GameServer extends ApplicationAdapter {
 	Logger logger = LoggerFactory.getLogger(GameServer.class);
@@ -31,7 +33,7 @@ public class GameServer extends ApplicationAdapter {
 		logger.info("Server started");
 		socketManager = new ServerConnectionManager(this);
 		world = new World(Vector2.Zero, true);
-		ball = new Ball(world);
+		ball = new Ball(this);
 	}
 
 	@Override
@@ -95,6 +97,12 @@ public class GameServer extends ApplicationAdapter {
 
 	void handleKeyEvent(Player player, KeyEvent event) {
 		player.handleKeyEvent(event);
+	}
+
+	Optional<Player> getRandomPlayer() {
+		var active = Arrays.stream(players).filter(Objects::nonNull).toArray();
+		if (active.length == 0) return Optional.empty();
+		return Optional.of((Player)active[MathUtils.random(active.length - 1)]);
 	}
 
 	public static void main(String[] args) {

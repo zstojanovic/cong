@@ -12,15 +12,15 @@ public class Ball {
 
   Preferences preferences;
   Status status = Status.COUNTDOWN;
-  World world;
+  GameServer server;
   float diameter = 0.5f;
   Body body;
   float countdownTimer;
   float playTimer;
   float record;
 
-  public Ball(World world) {
-    this.world = world;
+  public Ball(GameServer server) {
+    this.server = server;
     preferences = Gdx.app.getPreferences("dontdroptheball-server");
     record = preferences.getFloat("record");
     body = createBody();
@@ -46,14 +46,17 @@ public class Ball {
   private void startPlaying() {
     status = Status.PLAY;
     playTimer = 0;
-    var direction = MathUtils.random() * MathUtils.PI2;
+    var player = server.getRandomPlayer();
+    float direction = player
+      .map(p -> p.body.getPosition().sub(body.getPosition()).angleRad() + MathUtils.random(-0.02f, 0.02f))
+      .orElseGet(() -> MathUtils.random() * MathUtils.PI2);
     body.setLinearVelocity(MathUtils.cos(direction) * 2.5f, MathUtils.sin(direction) * 2.5f);
   }
 
   private Body createBody() {
     var bodyDef = new BodyDef();
     bodyDef.type = BodyDef.BodyType.DynamicBody;
-    var body = world.createBody(bodyDef);
+    var body = server.world.createBody(bodyDef);
     var shape = new CircleShape();
     shape.setRadius(diameter/2);
     var fixtureDef = new FixtureDef();

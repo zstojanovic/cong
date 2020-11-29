@@ -171,10 +171,10 @@ public class GameScreen extends ScreenAdapter {
     } else {
       m = "(" + message.timestamp + ") " + players[message.playerIndex].name + ":\n" + message.text;
     }
-    var appended = chatArea.getText() + m;
+    var lines = (chatArea.getText() + m).split("\\r?\\n");
     var newText = new StringBuilder();
-    var skipCount = Math.max(0, appended.lines().count() - (Const.MESSAGE_LIMIT * 2));
-    appended.lines().skip(skipCount).forEach(s -> newText.append(s).append("\n"));
+    var skipCount = Math.max(0, lines.length - (Const.MESSAGE_LIMIT * 2));
+    Arrays.stream(lines).skip(skipCount).forEach(s -> newText.append(s).append("\n"));
     chatArea.setText(newText.toString());
     chatArea.setCursorPosition(newText.length());
   }
