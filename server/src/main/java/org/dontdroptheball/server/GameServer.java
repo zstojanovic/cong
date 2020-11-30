@@ -39,30 +39,29 @@ public class GameServer extends ApplicationAdapter {
 		var delta = Gdx.graphics.getDeltaTime();
 		world.step(delta, 6, 2);
 		ball.step(delta);
-		Player.all().forEach(p -> p.step(delta));
+		Paddle.all().forEach(p -> p.step(delta));
 		socketManager.broadcast(getState());
 	}
 
 	private GameState getState() {
 		return new GameState(
 			ball.getState(),
-			Player.all().stream().map(Player::getState).collect(Collectors.toList()));
+			Paddle.all().stream().map(Paddle::getState).collect(Collectors.toList()));
 	}
 
-	Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {
-		var player = Player.create(request.name, world);
-		if (player.isEmpty()) logger.error("Too many players");
-		player.ifPresent(p -> {
-			var names = Player.all().stream().map(a -> a.name).toArray(String[]::new);
-			socketManager.broadcast(new PlayerNames(names));
-			socketManager.send(socket, new NewPlayerResponse(p.index, chatQueue.toArray(ChatMessage[]::new)));
-			handleMessage(new ChatMessage(getTimestamp(), p.name + " joined the game\n"));
-		});
+	Player createNewPlayer(NewPlayerRequest request, WebSocket socket) {
+		var paddle = Paddle.create(world);
+		if (paddle.isEmpty()) logger.warn("All paddles occupied");
+		var player = Player.create(request.name, paddle);
+		var names = Player.all().stream().map(a -> a.name).toArray(String[]::new);
+		socketManager.broadcast(new PlayerNames(names));
+		socketManager.send(socket, new NewPlayerResponse(player.id, chatQueue.toArray(ChatMessage[]::new)));
+		handleMessage(new ChatMessage(getTimestamp(), player.name + " joined the game\n")); // TODO change wording if no paddle?
 		return player;
 	}
 
 	void handleMessage(Player player, String message) {
-		handleMessage(new ChatMessage(getTimestamp(), player.index, message));
+		handleMessage(new ChatMessage(getTimestamp(), player.id, message));
 	}
 
 	void handleMessage(ChatMessage chatMessage) {
@@ -81,13 +80,14 @@ public class GameServer extends ApplicationAdapter {
 	}
 
 	void handleKeyEvent(Player player, KeyEvent event) {
-		player.handleKeyEvent(event);
+		if (player.paddle.isEmpty()) logger.warn("Player without paddle sent KeyEvent");
+		player.paddle.ifPresent(p -> p.handleKeyEvent(event));
 	}
 
-	Optional<Player> getRandomPlayer() {
-		var players = Player.all();
-		if (players.size() == 0) return Optional.empty();
-		return Optional.of(players.get(MathUtils.random(players.size() - 1)));
+	Optional<Paddle> getRandomPaddle() {
+		var paddles = Paddle.all();
+		if (paddles.size() == 0) return Optional.empty();
+		return Optional.of(paddles.get(MathUtils.random(paddles.size() - 1)));
 	}
 
 	public static void main(String[] args) {

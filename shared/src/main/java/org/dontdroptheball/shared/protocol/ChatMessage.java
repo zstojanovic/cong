@@ -9,15 +9,15 @@ public class ChatMessage implements Transferable<ChatMessage> {
   static final ChatMessage EXAMPLE = new ChatMessage();
   static final byte SERVER = -1;
   public String timestamp;
-  public byte playerIndex;
+  public byte playerId;
   public String text;
 
   ChatMessage() {
   }
 
-  public ChatMessage(String timestamp, byte playerIndex, String text) {
+  public ChatMessage(String timestamp, byte playerId, String text) {
     this.timestamp = timestamp;
-    this.playerIndex = playerIndex;
+    this.playerId = playerId;
     this.text = text;
   }
 
@@ -26,12 +26,12 @@ public class ChatMessage implements Transferable<ChatMessage> {
   }
 
   public boolean isServerMessage() {
-    return playerIndex == SERVER;
+    return playerId == SERVER;
   }
   
   @Override
   public void serialize(Serializer serializer) throws SerializationException {
-    serializer.serializeString(timestamp).serializeByte(playerIndex).serializeString(text);
+    serializer.serializeString(timestamp).serializeByte(playerId).serializeString(text);
   }
 
   @Override

@@ -1,7 +1,8 @@
 package org.dontdroptheball.shared;
 
 public class Const {
-  public static final byte MAX_PLAYERS = 9;
+  public static final byte MAX_PLAYERS = 100;
+  public static final byte MAX_PADDLES = 9;
   public static final float WIDTH = 11;
   public static final float HEIGHT = 9;
   public static final int MESSAGE_LIMIT = 50;

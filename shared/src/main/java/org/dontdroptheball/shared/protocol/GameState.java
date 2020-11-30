@@ -13,29 +13,29 @@ import java.util.List;
 public class GameState implements Transferable<GameState> {
   static final GameState EXAMPLE = new GameState();
   public BallState ballState;
-  public List<PlayerState> playerStates;
+  public List<PaddleState> paddleStates;
 
   GameState() {
   }
 
-  public GameState(BallState ballState, List<PlayerState> playerStates) {
+  public GameState(BallState ballState, List<PaddleState> paddleStates) {
     this.ballState = ballState;
-    this.playerStates = playerStates;
+    this.paddleStates = paddleStates;
   }
 
   @Override
   public void serialize(Serializer serializer) throws SerializationException {
-    serializer.serializeTransferable(ballState).serializeTransferableArray(playerStates.toArray(new PlayerState[]{}));
+    serializer.serializeTransferable(ballState).serializeTransferableArray(paddleStates.toArray(new PaddleState[]{}));
   }
 
   @Override
   public GameState deserialize(Deserializer deserializer) throws SerializationException {
     var state = new GameState();
     state.ballState = deserializer.deserializeTransferable(BallState.EXAMPLE);
-    state.playerStates = new ArrayList<>();
-    var playerStatesArray = new PlayerState[Const.MAX_PLAYERS];
-    var length = deserializer.deserializeTransferableArray(playerStatesArray, PlayerState.EXAMPLE);
-    state.playerStates.addAll(Arrays.asList(playerStatesArray).subList(0, length));
+    state.paddleStates = new ArrayList<>();
+    var paddleStatesArray = new PaddleState[Const.MAX_PADDLES];
+    var length = deserializer.deserializeTransferableArray(paddleStatesArray, PaddleState.EXAMPLE);
+    state.paddleStates.addAll(Arrays.asList(paddleStatesArray).subList(0, length));
     return state;
   }
 }

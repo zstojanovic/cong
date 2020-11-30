@@ -46,9 +46,9 @@ public class Ball {
   private void startPlaying() {
     status = Status.PLAY;
     playTimer = 0;
-    var player = server.getRandomPlayer();
-    float direction = player
-      .map(p -> p.body.getPosition().sub(body.getPosition()).angleRad() + MathUtils.random(-0.02f, 0.02f))
+    var paddle = server.getRandomPaddle();
+    float direction = paddle
+      .map(p -> p.body.getPosition().sub(body.getPosition()).angleRad() + MathUtils.random(-0.04f, 0.04f))
       .orElseGet(() -> MathUtils.random() * MathUtils.PI2);
     body.setLinearVelocity(MathUtils.cos(direction) * 2.5f, MathUtils.sin(direction) * 2.5f);
   }

@@ -1,6 +1,7 @@
 package org.dontdroptheball.server;
 
 import com.github.czyzby.websocket.serialization.Transferable;
+import org.dontdroptheball.shared.Const;
 import org.dontdroptheball.shared.protocol.*;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
@@ -31,14 +32,19 @@ public class ServerConnectionManager extends WebSocketServer {
 
   @Override
   public void onOpen(WebSocket socket, ClientHandshake handshake) {
-    logger.info(socket.getRemoteSocketAddress() + " new connection");
+    if (getConnections().size() > Const.MAX_PLAYERS) {
+      logger.warn(socket.getRemoteSocketAddress() + " requesting connection but limit reached");
+      socket.close();
+    } else {
+      logger.info(socket.getRemoteSocketAddress() + " new connection");
+    }
   }
 
   @Override
   public void onClose(WebSocket socket, int code, String reason, boolean remote) {
     var player = socketMap.get(socket);
     if (player != null) {
-      logger.info("Player " + player.index + " disconnected");
+      logger.info("Player " + player.id + " disconnected");
       server.disconnectPlayer(player);
     } else {
       logger.info(socket + " disconnected");
@@ -61,10 +67,8 @@ public class ServerConnectionManager extends WebSocketServer {
     var player = socketMap.get(socket);
     if (object instanceof NewPlayerRequest) {
       var newPlayer = server.createNewPlayer((NewPlayerRequest)object, socket);
-      newPlayer.ifPresent(p -> {
-        socketMap.put(socket, p);
-        logger.info("Player " + p.index + " created");
-      });
+      socketMap.put(socket, newPlayer);
+      logger.info("Player " + newPlayer.id + " created");
     } else if (player == null) {
       logger.error(socket.getRemoteSocketAddress() +
         " received object from connection without Player" + object.getClass().getCanonicalName());

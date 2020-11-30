@@ -5,15 +5,15 @@ import com.github.czyzby.websocket.serialization.Transferable;
 import com.github.czyzby.websocket.serialization.impl.Deserializer;
 import com.github.czyzby.websocket.serialization.impl.Serializer;
 
-public class PlayerState implements Transferable<PlayerState> {
-  static final PlayerState EXAMPLE = new PlayerState();
+public class PaddleState implements Transferable<PaddleState> {
+  static final PaddleState EXAMPLE = new PaddleState();
   public byte index;
   public float location;
 
-  PlayerState() {
+  PaddleState() {
   }
 
-  public PlayerState(byte index, float location) {
+  public PaddleState(byte index, float location) {
     this.index = index;
     this.location = location;
   }
@@ -24,7 +24,7 @@ public class PlayerState implements Transferable<PlayerState> {
   }
 
   @Override
-  public PlayerState deserialize(Deserializer deserializer) throws SerializationException {
-    return new PlayerState(deserializer.deserializeByte(), deserializer.deserializeFloat());
+  public PaddleState deserialize(Deserializer deserializer) throws SerializationException {
+    return new PaddleState(deserializer.deserializeByte(), deserializer.deserializeFloat());
   }
 }

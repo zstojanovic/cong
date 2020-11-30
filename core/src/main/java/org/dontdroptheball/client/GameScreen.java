@@ -29,7 +29,8 @@ public class GameScreen extends ScreenAdapter {
   Texture panel;
   Ball ball = new Ball();
   Player[] players = new Player[Const.MAX_PLAYERS];
-  Texture[] paddleTextures = new Texture[Const.MAX_PLAYERS];
+  Paddle[] paddles = new Paddle[Const.MAX_PADDLES];
+  Texture[] paddleTextures = new Texture[Const.MAX_PADDLES];
   Stage stage;
   TextArea chatArea;
   Label scoreLabel;
@@ -48,7 +49,7 @@ public class GameScreen extends ScreenAdapter {
     batch = new SpriteBatch();
     background = new Texture("background.png");
     panel = new Texture("panel.png");
-    for (int i = 0; i < Const.MAX_PLAYERS; i++) {
+    for (int i = 0; i < Const.MAX_PADDLES; i++) {
       paddleTextures[i] = new Texture("paddle" + i + ".png");
     }
 
@@ -108,8 +109,8 @@ public class GameScreen extends ScreenAdapter {
     batch.begin();
     batch.draw(background, 0, 0, 16, 9);
     ball.render(batch);
-    for (Player player: players) {
-      if (player != null) player.render(batch);
+    for (Paddle paddle : paddles) {
+      if (paddle != null) paddle.render(batch);
     }
     batch.draw(panel, 11, 0, 5, 9);
     batch.end();
@@ -148,18 +149,17 @@ public class GameScreen extends ScreenAdapter {
     ball.setState(state.ballState);
     scoreLabel.setText(String.valueOf((int)state.ballState.playTimer));
     recordLabel.setText(String.valueOf((int)state.ballState.record));
-    var stateIndexes = state.playerStates.stream().map(s -> s.index).collect(Collectors.toList());
+    var stateIndexes = state.paddleStates.stream().map(s -> s.index).collect(Collectors.toList());
     var missing =
-      Arrays.stream(players).filter(p -> p != null && !stateIndexes.contains(p.index)).collect(Collectors.toList());
-    for (Player p: missing) {
-      players[p.index] = null;
+      Arrays.stream(paddles).filter(p -> p != null && !stateIndexes.contains(p.index)).collect(Collectors.toList());
+    for (Paddle p: missing) {
+      paddles[p.index] = null;
     }
-    for (PlayerState p: state.playerStates) {
-      if (players[p.index] == null) {
-        players[p.index] =
-          new Player(p.index, "Player" + p.index, p.location, paddleTextures[p.index]);
+    for (PaddleState p: state.paddleStates) {
+      if (paddles[p.index] == null) {
+        paddles[p.index] = new Paddle(p.index, p.location, paddleTextures[p.index]);
       } else {
-        players[p.index].setState(p);
+        paddles[p.index].setState(p);
       }
     }
   }
@@ -169,7 +169,7 @@ public class GameScreen extends ScreenAdapter {
     if (message.isServerMessage()) {
       m = "[" + message.timestamp + "] >>> " + message.text;
     } else {
-      m = "(" + message.timestamp + ") " + players[message.playerIndex].name + ":\n" + message.text;
+      m = "(" + message.timestamp + ") " + players[message.playerId].name + ":\n" + message.text;
     }
     var lines = (chatArea.getText() + m).split("\\r?\\n");
     var newText = new StringBuilder();
@@ -184,7 +184,7 @@ public class GameScreen extends ScreenAdapter {
       var name = playerNames.names[i];
       if (name != null) {
         if (players[i] == null) {
-          players[i] = new Player(i, name, 0, paddleTextures[i]);
+          players[i] = new Player(i, name);
         } else {
           players[i].name = name;
         }
