@@ -4,38 +4,42 @@ import com.github.czyzby.websocket.serialization.SerializationException;
 import com.github.czyzby.websocket.serialization.Transferable;
 import com.github.czyzby.websocket.serialization.impl.Deserializer;
 import com.github.czyzby.websocket.serialization.impl.Serializer;
-import org.dontdroptheball.shared.Const;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class GameState implements Transferable<GameState> {
   static final GameState EXAMPLE = new GameState();
-  public BallState ballState;
-  public List<PaddleState> paddleStates;
+  public float playTimer;
+  public float record;
+  public BallState[] ballStates;
+  public PaddleState[] paddleStates;
+  public PowerUpState[] powerUpStates;
 
   GameState() {
   }
 
-  public GameState(BallState ballState, List<PaddleState> paddleStates) {
-    this.ballState = ballState;
+  public GameState(
+    float playTimer, float record, BallState[] ballStates, PaddleState[] paddleStates, PowerUpState[] powerUpStates
+  ) {
+    this.playTimer = playTimer;
+    this.record = record;
+    this.ballStates = ballStates;
     this.paddleStates = paddleStates;
+    this.powerUpStates = powerUpStates;
   }
 
   @Override
   public void serialize(Serializer serializer) throws SerializationException {
-    serializer.serializeTransferable(ballState).serializeTransferableArray(paddleStates.toArray(new PaddleState[]{}));
+    serializer
+      .serializeFloat(playTimer).serializeFloat(record).serializeTransferableArray(ballStates)
+      .serializeTransferableArray(paddleStates).serializeTransferableArray(powerUpStates);
   }
 
   @Override
   public GameState deserialize(Deserializer deserializer) throws SerializationException {
-    var state = new GameState();
-    state.ballState = deserializer.deserializeTransferable(BallState.EXAMPLE);
-    state.paddleStates = new ArrayList<>();
-    var paddleStatesArray = new PaddleState[Const.MAX_PADDLES];
-    var length = deserializer.deserializeTransferableArray(paddleStatesArray, PaddleState.EXAMPLE);
-    state.paddleStates.addAll(Arrays.asList(paddleStatesArray).subList(0, length));
-    return state;
+    return new GameState(
+      deserializer.deserializeFloat(),
+      deserializer.deserializeFloat(),
+      deserializer.deserializeTransferableArray(BallState.EXAMPLE, BallState[]::new),
+      deserializer.deserializeTransferableArray(PaddleState.EXAMPLE, PaddleState[]::new),
+      deserializer.deserializeTransferableArray(PowerUpState.EXAMPLE, PowerUpState[]::new));
   }
 }

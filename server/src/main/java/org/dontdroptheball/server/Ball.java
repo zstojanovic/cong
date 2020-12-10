@@ -1,56 +1,68 @@
 package org.dontdroptheball.server;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import org.dontdroptheball.shared.Const;
 import org.dontdroptheball.shared.protocol.BallState;
 
-public class Ball {
-  enum Status { COUNTDOWN, PLAY }
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-  Preferences preferences;
-  Status status = Status.COUNTDOWN;
+public class Ball {
+  byte id;
   GameServer server;
   float diameter = 0.5f;
   Body body;
-  float countdownTimer;
-  float playTimer;
-  float record;
+  float velocity = 2.5f;
 
-  public Ball(GameServer server) {
+  static short COLLISION_CODE = 1;
+  private static Ball[] balls = new Ball[Const.MAX_BALLS];
+
+  private Ball(byte id, GameServer server, Vector2 location) {
+    this.id = id;
     this.server = server;
-    preferences = Gdx.app.getPreferences("dontdroptheball-server");
-    record = preferences.getFloat("record");
     body = createBody();
-    startCountdown();
+    body.setTransform(location, 0);
+  }
+
+  public static Ball create(GameServer server, Vector2 location) {
+    byte newId = 0;
+    while (newId < Const.MAX_BALLS && balls[newId] != null) newId++;
+    if (newId == Const.MAX_BALLS) throw new RuntimeException("Too many balls");
+    balls[newId] = new Ball(newId, server, location);
+    return balls[newId];
+  }
+
+  public static List<Ball> all() {
+    return Arrays.stream(balls).filter(Objects::nonNull).collect(Collectors.toList());
+  }
+
+  public static Ball first() {
+    return Arrays.stream(balls).filter(Objects::nonNull).findFirst().get();
+  }
+
+  public static long count() {
+    return Arrays.stream(balls).filter(Objects::nonNull).count();
   }
 
   public BallState getState() {
-    return new BallState(body.getPosition().x, body.getPosition().y, playTimer, record);
+    return new BallState(id, body.getPosition().x, body.getPosition().y);
   }
 
-  private void startCountdown() {
-    status = Status.COUNTDOWN;
-    countdownTimer = 3;
-    if (playTimer > record) {
-      record = playTimer;
-      preferences.putFloat("record", record);
-      preferences.flush();
-    }
+  void startCountdown() {
     body.setTransform(Const.WIDTH/2, Const.HEIGHT/2, 0);
     body.setLinearVelocity(0, 0);
   }
 
-  private void startPlaying() {
-    status = Status.PLAY;
-    playTimer = 0;
-    var paddle = server.getRandomPaddle();
-    float direction = paddle
-      .map(p -> p.body.getPosition().sub(body.getPosition()).angleRad() + MathUtils.random(-0.04f, 0.04f))
-      .orElseGet(() -> MathUtils.random() * MathUtils.PI2);
-    body.setLinearVelocity(MathUtils.cos(direction) * 2.5f, MathUtils.sin(direction) * 2.5f);
+  void startPlaying(Vector2 target) {
+    startPlaying(target.sub(body.getPosition()).angleRad() + MathUtils.random(-0.04f, 0.04f));
+  }
+
+  void startPlaying(float direction) {
+    body.setLinearVelocity(MathUtils.cos(direction) * velocity, MathUtils.sin(direction) * velocity);
   }
 
   private Body createBody() {
@@ -64,24 +76,29 @@ public class Ball {
     fixtureDef.friction = 0;
     fixtureDef.restitution = 1;
     fixtureDef.density = 0.04f;
+    fixtureDef.filter.categoryBits = COLLISION_CODE;
+    fixtureDef.filter.maskBits = Paddle.COLLISION_CODE;
     body.createFixture(fixtureDef);
     shape.dispose();
     return body;
   }
 
-  public void step(float delta) {
-    if (status == Status.COUNTDOWN) {
-      countdownTimer -= delta;
-      if (countdownTimer <= 0) startPlaying();
-    } else {
-      var dropped =
-        body.getPosition().x < -diameter || body.getPosition().x > (Const.WIDTH + diameter) ||
-        body.getPosition().y < -diameter || body.getPosition().y > (Const.HEIGHT + diameter);
-      if (dropped) {
-        startCountdown();
-      } else {
-        playTimer += delta;
-      }
-    }
+  boolean dropped() {
+    return
+      body.getPosition().x < -diameter || body.getPosition().x > (Const.WIDTH + diameter) ||
+      body.getPosition().y < -diameter || body.getPosition().y > (Const.HEIGHT + diameter);
+  }
+
+  void freeze() {
+    body.setActive(false);
+  }
+
+  void unfreeze() {
+    body.setActive(true);
+  }
+
+  public void dispose() {
+    balls[id] = null;
+    server.world.destroyBody(body);
   }
 }

@@ -21,7 +21,9 @@ public class Paddle {
   float height = 0.3f;
   Body body;
   float currentSpeed = 0;
+  float speedFactor = 1;
 
+  static short COLLISION_CODE = 2;
   private static Paddle[] paddles = new Paddle[Const.MAX_PADDLES];
 
   public static Optional<Paddle> create(World world) {
@@ -37,12 +39,18 @@ public class Paddle {
     return Arrays.stream(paddles).filter(Objects::nonNull).collect(Collectors.toList());
   }
 
+  public static Optional<Paddle> random() {
+    var list = all();
+    if (list.isEmpty()) return Optional.empty();
+    return Optional.of(list.get(MathUtils.random(list.size() - 1)));
+  }
+
   private Paddle(byte index, float location, World world) {
     this.index = index;
     this.location = location;
     this.world = world;
-
     body = createBody();
+    body.setUserData(this);
     updateBodyTransform();
   }
 
@@ -58,14 +66,23 @@ public class Paddle {
     shape.set(new float[]{-width/2,-height/2, -width/2,height/2, width/2,height/2, width/2,-height/2});
     var fixtureDef = new FixtureDef();
     fixtureDef.shape = shape;
+    fixtureDef.filter.categoryBits = COLLISION_CODE;
     body.createFixture(fixtureDef);
     shape.dispose();
     return body;
   }
 
   public void step(float delta) {
-    location = location + (currentSpeed * delta);
+    location = location + (currentSpeed * speedFactor * delta);
     updateBodyTransform();
+  }
+
+  void slowdown() {
+    speedFactor = 0.5f;
+  }
+
+  void fullSpeed() {
+    speedFactor = 1f;
   }
 
   private void updateBodyTransform() {

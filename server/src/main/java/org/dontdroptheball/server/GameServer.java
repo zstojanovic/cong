@@ -2,11 +2,12 @@ package org.dontdroptheball.server;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.backends.headless.HeadlessApplication;
 import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.physics.box2d.*;
 import org.dontdroptheball.shared.*;
 import org.dontdroptheball.shared.protocol.*;
 import org.java_websocket.WebSocket;
@@ -19,34 +20,125 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class GameServer extends ApplicationAdapter {
+	enum Status { COUNTDOWN, PLAY }
+
+	Status status = Status.COUNTDOWN;
+	Preferences preferences;
 	Logger logger = LoggerFactory.getLogger(GameServer.class);
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 	ServerConnectionManager socketManager;
 	World world;
-	Ball ball;
+	float countdownTimer;
+	float playTimer;
+	float record;
 	Queue<ChatMessage> chatQueue = new LinkedList<>();
+	float powerUpTimer;
 
 	@Override
 	public void create() {
 		logger.info("Server started");
+		preferences = Gdx.app.getPreferences("dontdroptheball-server");
+		record = preferences.getFloat("record");
 		socketManager = new ServerConnectionManager(this);
 		world = new World(Vector2.Zero, true);
-		ball = new Ball(this);
+		Ball.create(this, Vector2.Zero);
+		startCountdown();
+
+		world.setContactListener(new ContactListener() {
+			@Override
+			public void beginContact(Contact contact) {
+				var objectA = contact.getFixtureA().getBody().getUserData();
+				var objectB = contact.getFixtureB().getBody().getUserData();
+				if (objectA instanceof Paddle && objectB instanceof PowerUp) {
+					((PowerUp)objectB).trigger((Paddle)objectA);
+				}
+			}
+			@Override	public void endContact(Contact contact) {}
+			@Override	public void preSolve(Contact contact, Manifold oldManifold) {}
+			@Override	public void postSolve(Contact contact, ContactImpulse impulse) {}
+		});
 	}
 
 	@Override
 	public void render() {
 		var delta = Gdx.graphics.getDeltaTime();
 		world.step(delta, 6, 2);
-		ball.step(delta);
 		Paddle.all().forEach(p -> p.step(delta));
+		handleBalls(delta);
+		handlePowerUps(delta);
 		socketManager.broadcast(getState());
+	}
+
+	void handleBalls(float delta) { // Yes, this is how I'm naming this method. No discussion.
+		var dropped = Ball.all().stream().filter(Ball::dropped).collect(Collectors.toList());
+		var skip = Ball.count() - dropped.size() == 0 ? 1 : 0;
+		dropped.stream().skip(skip).forEach(Ball::dispose);
+		if (skip == 1) startCountdown();
+		if (status == Status.COUNTDOWN) {
+			countdownTimer -= delta;
+			if (countdownTimer <= 0) startPlaying();
+		} else {
+			playTimer += delta;
+		}
+		Ball.all().forEach(b -> {
+			var diff = Math.abs(b.body.getLinearVelocity().len() - b.velocity);
+			if (diff > 0.05f) {
+				b.body.setLinearVelocity(b.body.getLinearVelocity().setLength(b.velocity));
+			}
+		});
+	}
+
+	void handlePowerUps(float delta) {
+		if (powerUpTimer > 0) {
+			powerUpTimer -= delta;
+		} else  {
+			powerUpTimer = 5f;
+			if (status == Status.PLAY && PowerUp.all().size() < Const.MAX_BALLS) {
+				switch (MathUtils.random(2)) {
+					case 0:
+						new BallFreeze(this);
+						break;
+					case 1:
+						new ExtraBall(this);
+						break;
+					case 2:
+						new PaddleSlowdown(this);
+				}
+			}
+		}
+		PowerUp.all().forEach(p -> p.step(delta));
+	}
+
+	void startCountdown() {
+		status = Status.COUNTDOWN;
+		countdownTimer = 3;
+		if (playTimer > record) {
+			record = playTimer;
+			preferences.putFloat("record", record);
+			preferences.flush();
+		}
+		PowerUp.withBodies().forEach(PowerUp::dispose);
+		Ball.first().startCountdown();
+	}
+
+	void startPlaying() {
+		status = Status.PLAY;
+		playTimer = 0;
+		powerUpTimer = 5f;
+		var paddle = Paddle.random();
+		if (paddle.isPresent()) {
+			Ball.first().startPlaying(paddle.get().body.getPosition());
+		} else {
+			Ball.first().startPlaying(MathUtils.random() * MathUtils.PI2);
+		}
 	}
 
 	private GameState getState() {
 		return new GameState(
-			ball.getState(),
-			Paddle.all().stream().map(Paddle::getState).collect(Collectors.toList()));
+			playTimer, record,
+			Ball.all().stream().map(Ball::getState).toArray(BallState[]::new),
+			Paddle.all().stream().map(Paddle::getState).toArray(PaddleState[]::new),
+			PowerUp.withBodies().stream().map(PowerUp::getState).toArray(PowerUpState[]::new));
 	}
 
 	Player createNewPlayer(NewPlayerRequest request, WebSocket socket) {
@@ -82,12 +174,6 @@ public class GameServer extends ApplicationAdapter {
 	void handleKeyEvent(Player player, KeyEvent event) {
 		if (player.paddle.isEmpty()) logger.warn("Player without paddle sent KeyEvent");
 		player.paddle.ifPresent(p -> p.handleKeyEvent(event));
-	}
-
-	Optional<Paddle> getRandomPaddle() {
-		var paddles = Paddle.all();
-		if (paddles.size() == 0) return Optional.empty();
-		return Optional.of(paddles.get(MathUtils.random(paddles.size() - 1)));
 	}
 
 	public static void main(String[] args) {

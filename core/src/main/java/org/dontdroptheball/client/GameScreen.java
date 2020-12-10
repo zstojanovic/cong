@@ -27,10 +27,12 @@ public class GameScreen extends ScreenAdapter {
   FitViewport viewport;
   Texture background;
   Texture panel;
-  Ball ball = new Ball();
+  Ball[] balls = new Ball[Const.MAX_BALLS];
   Player[] players = new Player[Const.MAX_PLAYERS];
   Paddle[] paddles = new Paddle[Const.MAX_PADDLES];
+  PowerUp[] powerUps = new PowerUp[Const.MAX_BALLS];
   Texture[] paddleTextures = new Texture[Const.MAX_PADDLES];
+  Texture ballTexture;
   Stage stage;
   TextArea chatArea;
   Label scoreLabel;
@@ -52,6 +54,7 @@ public class GameScreen extends ScreenAdapter {
     for (int i = 0; i < Const.MAX_PADDLES; i++) {
       paddleTextures[i] = new Texture("paddle" + i + ".png");
     }
+    ballTexture = new Texture("ball.png");
 
     stage = new Stage(new FitViewport(1280, 720));
     var skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
@@ -108,9 +111,14 @@ public class GameScreen extends ScreenAdapter {
 
     batch.begin();
     batch.draw(background, 0, 0, 16, 9);
-    ball.render(batch);
+    for (Ball ball: balls) {
+      if (ball != null) ball.render(batch);
+    }
     for (Paddle paddle : paddles) {
       if (paddle != null) paddle.render(batch);
+    }
+    for (PowerUp p: powerUps) {
+      if (p != null) p.render(batch);
     }
     batch.draw(panel, 11, 0, 5, 9);
     batch.end();
@@ -146,21 +154,52 @@ public class GameScreen extends ScreenAdapter {
   }
 
   void setState(GameState state) {
-    ball.setState(state.ballState);
-    scoreLabel.setText(String.valueOf((int)state.ballState.playTimer));
-    recordLabel.setText(String.valueOf((int)state.ballState.record));
-    var stateIndexes = state.paddleStates.stream().map(s -> s.index).collect(Collectors.toList());
+    scoreLabel.setText(String.valueOf((int)state.playTimer));
+    recordLabel.setText(String.valueOf((int)state.record));
+    setPaddleStates(state.paddleStates);
+    setBallStates(state.ballStates);
+    setPowerUpStates(state.powerUpStates);
+  }
+
+  void setPaddleStates(PaddleState[] paddleStates) {
+    var stateIndexes = Arrays.stream(paddleStates).map(s -> s.index).collect(Collectors.toList());
     var missing =
       Arrays.stream(paddles).filter(p -> p != null && !stateIndexes.contains(p.index)).collect(Collectors.toList());
     for (Paddle p: missing) {
       paddles[p.index] = null;
     }
-    for (PaddleState p: state.paddleStates) {
+    for (PaddleState p: paddleStates) {
       if (paddles[p.index] == null) {
         paddles[p.index] = new Paddle(p.index, p.location, paddleTextures[p.index]);
       } else {
         paddles[p.index].setState(p);
       }
+    }
+  }
+
+  void setBallStates(BallState[] ballStates) {
+    var stateIndexes = Arrays.stream(ballStates).map(s -> s.id).collect(Collectors.toList());
+    var missing =
+      Arrays.stream(balls).filter(p -> p != null && !stateIndexes.contains(p.id)).collect(Collectors.toList());
+    for (Ball b: missing) {
+      balls[b.id] = null;
+    }
+    for (BallState b: ballStates) {
+      if (balls[b.id] == null) balls[b.id] = new Ball(b.id, ballTexture);
+       balls[b.id].setState(b);
+    }
+  }
+
+  void setPowerUpStates(PowerUpState[] powerUpStates) {
+    var stateIndexes = Arrays.stream(powerUpStates).map(s -> s.id).collect(Collectors.toList());
+    var missing =
+      Arrays.stream(powerUps).filter(p -> p != null && !stateIndexes.contains(p.id)).collect(Collectors.toList());
+    for (PowerUp p: missing) {
+      powerUps[p.id] = null;
+    }
+    for (PowerUpState p: powerUpStates) {
+      if (powerUps[p.id] == null) powerUps[p.id] = new PowerUp(p.id, ballTexture);
+      powerUps[p.id].setState(p);
     }
   }
 

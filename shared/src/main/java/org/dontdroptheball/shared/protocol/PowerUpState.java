@@ -5,16 +5,16 @@ import com.github.czyzby.websocket.serialization.Transferable;
 import com.github.czyzby.websocket.serialization.impl.Deserializer;
 import com.github.czyzby.websocket.serialization.impl.Serializer;
 
-public class BallState implements Transferable<BallState> {
-  static final BallState EXAMPLE = new BallState();
+public class PowerUpState implements Transferable<PowerUpState> {
+  static final PowerUpState EXAMPLE = new PowerUpState();
   public byte id;
   public float x;
   public float y;
 
-  BallState() {
+  PowerUpState() {
   }
 
-  public BallState(byte id, float x, float y) {
+  public PowerUpState(byte id, float x, float y) {
     this.id = id;
     this.x = x;
     this.y = y;
@@ -26,8 +26,8 @@ public class BallState implements Transferable<BallState> {
   }
 
   @Override
-  public BallState deserialize(Deserializer deserializer) throws SerializationException {
-    return new BallState(
+  public PowerUpState deserialize(Deserializer deserializer) throws SerializationException {
+    return new PowerUpState(
       deserializer.deserializeByte(),
       deserializer.deserializeFloat(),
       deserializer.deserializeFloat());
