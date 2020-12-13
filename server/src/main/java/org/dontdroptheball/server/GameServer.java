@@ -32,7 +32,7 @@ public class GameServer extends ApplicationAdapter {
 	float playTimer;
 	float record;
 	Queue<ChatMessage> chatQueue = new LinkedList<>();
-	float powerUpTimer;
+	int bounceCount = 0;
 	boolean bounce;
 	boolean drop;
 
@@ -55,6 +55,7 @@ public class GameServer extends ApplicationAdapter {
 					((PowerUp)objectB).trigger((Paddle)objectA);
 				}
 				if (objectA instanceof Ball || objectB instanceof Ball) {
+					bounceCount++;
 					bounce = true;
 				}
 			}
@@ -99,21 +100,17 @@ public class GameServer extends ApplicationAdapter {
 	}
 
 	void handlePowerUps(float delta) {
-		if (powerUpTimer > 0) {
-			powerUpTimer -= delta;
-		} else  {
-			powerUpTimer = 5f;
-			if (status == Status.PLAY) {
-				switch (MathUtils.random(2)) {
-					case 0:
-						BallFreeze.create(world);
-						break;
-					case 1:
-						ExtraBall.create(world);
-						break;
-					case 2:
-						PaddleSlowdown.create(world);
-				}
+		if (bounceCount >= 2 && status == Status.PLAY) {
+			bounceCount = 0;
+			switch (MathUtils.random(2)) {
+				case 0:
+					BallFreeze.create(world);
+					break;
+				case 1:
+					ExtraBall.create(world);
+					break;
+				case 2:
+					PaddleSlowdown.create(world);
 			}
 		}
 		PowerUp.repo.stream().forEach(p -> p.step(delta));
@@ -134,7 +131,7 @@ public class GameServer extends ApplicationAdapter {
 	void startPlaying() {
 		status = Status.PLAY;
 		playTimer = 0;
-		powerUpTimer = 5f;
+		bounceCount = 0;
 		var paddle = Paddle.repo.random();
 		if (paddle.isPresent()) {
 			Ball.repo.first().startPlaying(paddle.get().body.getPosition());
