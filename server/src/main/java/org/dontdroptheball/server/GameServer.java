@@ -41,7 +41,7 @@ public class GameServer extends ApplicationAdapter {
 		record = preferences.getFloat("record");
 		socketManager = new ServerConnectionManager(this);
 		world = new World(Vector2.Zero, true);
-		Ball.create(this, Vector2.Zero);
+		Ball.create(world);
 		startCountdown();
 
 		world.setContactListener(new ContactListener() {
@@ -63,15 +63,15 @@ public class GameServer extends ApplicationAdapter {
 	public void render() {
 		var delta = Gdx.graphics.getDeltaTime();
 		world.step(delta, 6, 2);
-		Paddle.all().forEach(p -> p.step(delta));
+		Paddle.repo.stream().forEach(p -> p.step(delta));
 		handleBalls(delta);
 		handlePowerUps(delta);
 		socketManager.broadcast(getState());
 	}
 
 	void handleBalls(float delta) { // Yes, this is how I'm naming this method. No discussion.
-		var dropped = Ball.all().stream().filter(Ball::dropped).collect(Collectors.toList());
-		var skip = Ball.count() - dropped.size() == 0 ? 1 : 0;
+		var dropped = Ball.repo.stream().filter(Ball::dropped).collect(Collectors.toList());
+		var skip = Ball.repo.count() - dropped.size() == 0 ? 1 : 0;
 		dropped.stream().skip(skip).forEach(Ball::dispose);
 		if (skip == 1) startCountdown();
 		if (status == Status.COUNTDOWN) {
@@ -80,7 +80,7 @@ public class GameServer extends ApplicationAdapter {
 		} else {
 			playTimer += delta;
 		}
-		Ball.all().forEach(b -> {
+		Ball.repo.stream().forEach(b -> {
 			var diff = Math.abs(b.body.getLinearVelocity().len() - b.velocity);
 			if (diff > 0.05f) {
 				b.body.setLinearVelocity(b.body.getLinearVelocity().setLength(b.velocity));
@@ -93,20 +93,20 @@ public class GameServer extends ApplicationAdapter {
 			powerUpTimer -= delta;
 		} else  {
 			powerUpTimer = 5f;
-			if (status == Status.PLAY && PowerUp.all().size() < Const.MAX_BALLS) {
+			if (status == Status.PLAY) {
 				switch (MathUtils.random(2)) {
 					case 0:
-						new BallFreeze(this);
+						BallFreeze.create(world);
 						break;
 					case 1:
-						new ExtraBall(this);
+						ExtraBall.create(world);
 						break;
 					case 2:
-						new PaddleSlowdown(this);
+						PaddleSlowdown.create(world);
 				}
 			}
 		}
-		PowerUp.all().forEach(p -> p.step(delta));
+		PowerUp.repo.stream().forEach(p -> p.step(delta));
 	}
 
 	void startCountdown() {
@@ -118,37 +118,39 @@ public class GameServer extends ApplicationAdapter {
 			preferences.flush();
 		}
 		PowerUp.withBodies().forEach(PowerUp::dispose);
-		Ball.first().startCountdown();
+		Ball.repo.first().startCountdown();
 	}
 
 	void startPlaying() {
 		status = Status.PLAY;
 		playTimer = 0;
 		powerUpTimer = 5f;
-		var paddle = Paddle.random();
+		var paddle = Paddle.repo.random();
 		if (paddle.isPresent()) {
-			Ball.first().startPlaying(paddle.get().body.getPosition());
+			Ball.repo.first().startPlaying(paddle.get().body.getPosition());
 		} else {
-			Ball.first().startPlaying(MathUtils.random() * MathUtils.PI2);
+			Ball.repo.first().startPlaying(MathUtils.random() * MathUtils.PI2);
 		}
 	}
 
 	private GameState getState() {
 		return new GameState(
 			playTimer, record,
-			Ball.all().stream().map(Ball::getState).toArray(BallState[]::new),
-			Paddle.all().stream().map(Paddle::getState).toArray(PaddleState[]::new),
-			PowerUp.withBodies().stream().map(PowerUp::getState).toArray(PowerUpState[]::new));
+			Ball.repo.stream().map(Ball::getState).toArray(BallState[]::new),
+			Paddle.repo.stream().map(Paddle::getState).toArray(PaddleState[]::new),
+			PowerUp.withBodies().map(PowerUp::getState).toArray(PowerUpState[]::new));
 	}
 
-	Player createNewPlayer(NewPlayerRequest request, WebSocket socket) {
+	Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {
 		var paddle = Paddle.create(world);
 		if (paddle.isEmpty()) logger.warn("All paddles occupied");
 		var player = Player.create(request.name, paddle);
-		var names = Player.all().stream().map(a -> a.name).toArray(String[]::new);
-		socketManager.broadcast(new PlayerNames(names));
-		socketManager.send(socket, new NewPlayerResponse(player.id, chatQueue.toArray(ChatMessage[]::new)));
-		handleMessage(new ChatMessage(getTimestamp(), player.name + " joined the game\n")); // TODO change wording if no paddle?
+		player.ifPresent(p -> {
+			var names = Player.repo.stream().map(a -> a.name).toArray(String[]::new);
+			socketManager.broadcast(new PlayerNames(names));
+			socketManager.send(socket, new NewPlayerResponse(p.id, chatQueue.toArray(ChatMessage[]::new)));
+			handleMessage(new ChatMessage(getTimestamp(), p.name + " joined the game\n"));
+		});
 		return player;
 	}
 

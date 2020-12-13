@@ -67,8 +67,12 @@ public class ServerConnectionManager extends WebSocketServer {
     var player = socketMap.get(socket);
     if (object instanceof NewPlayerRequest) {
       var newPlayer = server.createNewPlayer((NewPlayerRequest)object, socket);
-      socketMap.put(socket, newPlayer);
-      logger.info("Player " + newPlayer.id + " created");
+      if (newPlayer.isPresent()) {
+        socketMap.put(socket, newPlayer.get());
+        logger.info("Player " + newPlayer.get().id + " created");
+      } else {
+        logger.error("Too many players");
+      }
     } else if (player == null) {
       logger.error(socket.getRemoteSocketAddress() +
         " received object from connection without Player" + object.getClass().getCanonicalName());

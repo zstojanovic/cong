@@ -6,49 +6,26 @@ import com.badlogic.gdx.physics.box2d.*;
 import org.dontdroptheball.shared.Const;
 import org.dontdroptheball.shared.protocol.BallState;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
-public class Ball {
-  byte id;
-  GameServer server;
+public class Ball extends GameElement {
+  static Repository<Ball> repo = new Repository<>(new Ball[Const.MAX_BALLS]);
+  static short COLLISION_CODE = 1;
+
   float diameter = 0.5f;
-  Body body;
   float velocity = 2.5f;
 
-  static short COLLISION_CODE = 1;
-  private static Ball[] balls = new Ball[Const.MAX_BALLS];
-
-  private Ball(byte id, GameServer server, Vector2 location) {
-    this.id = id;
-    this.server = server;
+  private Ball(byte id, World world) {
+    super(id, world);
     body = createBody();
-    body.setTransform(location, 0);
+    body.setTransform(new Vector2(Const.WIDTH/2, Const.HEIGHT/2), 0);
   }
 
-  public static Ball create(GameServer server, Vector2 location) {
-    byte newId = 0;
-    while (newId < Const.MAX_BALLS && balls[newId] != null) newId++;
-    if (newId == Const.MAX_BALLS) throw new RuntimeException("Too many balls");
-    balls[newId] = new Ball(newId, server, location);
-    return balls[newId];
+  static Optional<Ball> create(World world) {
+    return repo.create(id -> new Ball(id, world));
   }
 
-  public static List<Ball> all() {
-    return Arrays.stream(balls).filter(Objects::nonNull).collect(Collectors.toList());
-  }
-
-  public static Ball first() {
-    return Arrays.stream(balls).filter(Objects::nonNull).findFirst().get();
-  }
-
-  public static long count() {
-    return Arrays.stream(balls).filter(Objects::nonNull).count();
-  }
-
-  public BallState getState() {
+  BallState getState() {
     return new BallState(id, body.getPosition().x, body.getPosition().y);
   }
 
@@ -68,7 +45,7 @@ public class Ball {
   private Body createBody() {
     var bodyDef = new BodyDef();
     bodyDef.type = BodyDef.BodyType.DynamicBody;
-    var body = server.world.createBody(bodyDef);
+    var body = world.createBody(bodyDef);
     var shape = new CircleShape();
     shape.setRadius(diameter/2);
     var fixtureDef = new FixtureDef();
@@ -77,7 +54,7 @@ public class Ball {
     fixtureDef.restitution = 1;
     fixtureDef.density = 0.04f;
     fixtureDef.filter.categoryBits = COLLISION_CODE;
-    fixtureDef.filter.maskBits = Paddle.COLLISION_CODE;
+    fixtureDef.filter.maskBits = (short)(Paddle.COLLISION_CODE | Ball.COLLISION_CODE);
     body.createFixture(fixtureDef);
     shape.dispose();
     return body;
@@ -97,8 +74,8 @@ public class Ball {
     body.setActive(true);
   }
 
-  public void dispose() {
-    balls[id] = null;
-    server.world.destroyBody(body);
+  void dispose() {
+    world.destroyBody(body);
+    repo.remove(this);
   }
 }

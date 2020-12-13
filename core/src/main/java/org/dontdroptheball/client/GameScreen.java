@@ -30,7 +30,7 @@ public class GameScreen extends ScreenAdapter {
   Ball[] balls = new Ball[Const.MAX_BALLS];
   Player[] players = new Player[Const.MAX_PLAYERS];
   Paddle[] paddles = new Paddle[Const.MAX_PADDLES];
-  PowerUp[] powerUps = new PowerUp[Const.MAX_BALLS];
+  PowerUp[] powerUps = new PowerUp[Const.MAX_POWER_UPS];
   Texture[] paddleTextures = new Texture[Const.MAX_PADDLES];
   Texture ballTexture;
   Stage stage;

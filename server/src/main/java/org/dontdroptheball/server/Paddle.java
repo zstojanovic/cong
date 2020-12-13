@@ -6,56 +6,32 @@ import org.dontdroptheball.shared.Const;
 import org.dontdroptheball.shared.Const.Path;
 import org.dontdroptheball.shared.protocol.*;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-public class Paddle {
-  byte index;
-  World world;
+public class Paddle extends GameElement {
+  static Repository<Paddle> repo = new Repository<>(new Paddle[Const.MAX_PADDLES]);
+  static short COLLISION_CODE = 2;
+
   float location;
   float maxSpeed = 5;
   float width = 1;
   float height = 0.3f;
-  Body body;
   float currentSpeed = 0;
   float speedFactor = 1;
 
-  static short COLLISION_CODE = 2;
-  private static Paddle[] paddles = new Paddle[Const.MAX_PADDLES];
-
-  public static Optional<Paddle> create(World world) {
-    byte newIndex = 0;
-    while (newIndex < Const.MAX_PADDLES && paddles[newIndex] != null) newIndex++;
-    if (newIndex == Const.MAX_PADDLES) return Optional.empty();
-    var paddle = new Paddle(newIndex, MathUtils.random(0f, Path.LENGTH), world);
-    paddles[newIndex] = paddle;
-    return Optional.of(paddle);
-  }
-
-  public static List<Paddle> all() {
-    return Arrays.stream(paddles).filter(Objects::nonNull).collect(Collectors.toList());
-  }
-
-  public static Optional<Paddle> random() {
-    var list = all();
-    if (list.isEmpty()) return Optional.empty();
-    return Optional.of(list.get(MathUtils.random(list.size() - 1)));
-  }
-
-  private Paddle(byte index, float location, World world) {
-    this.index = index;
-    this.location = location;
-    this.world = world;
+  private Paddle(byte id, World world) {
+    super(id, world);
     body = createBody();
-    body.setUserData(this);
+    this.location = MathUtils.random(0f, Path.LENGTH);
     updateBodyTransform();
   }
 
-  public PaddleState getState() {
-    return new PaddleState(index, location);
+  static Optional<Paddle> create(World world) {
+    return repo.create(id -> new Paddle(id, world));
+  }
+
+  PaddleState getState() {
+    return new PaddleState(id, location);
   }
 
   private Body createBody() {
@@ -68,11 +44,12 @@ public class Paddle {
     fixtureDef.shape = shape;
     fixtureDef.filter.categoryBits = COLLISION_CODE;
     body.createFixture(fixtureDef);
+    body.setUserData(this);
     shape.dispose();
     return body;
   }
 
-  public void step(float delta) {
+  void step(float delta) {
     location = location + (currentSpeed * speedFactor * delta);
     updateBodyTransform();
   }
@@ -99,7 +76,7 @@ public class Paddle {
     }
   }
 
-  public void handleKeyEvent(KeyEvent keyEvent) {
+  void handleKeyEvent(KeyEvent keyEvent) {
     switch (keyEvent.code) {
       case LEFT_PRESSED:
         if (currentSpeed == 0) currentSpeed = maxSpeed; else currentSpeed = 0;
@@ -116,8 +93,8 @@ public class Paddle {
     }
   }
 
-  public void dispose() {
-    paddles[index] = null;
+  void dispose() {
     world.destroyBody(body);
+    repo.remove(this);
   }
 }
