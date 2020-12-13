@@ -1,6 +1,7 @@
 package org.dontdroptheball.client;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -32,11 +33,13 @@ public class GameScreen extends ScreenAdapter {
   Paddle[] paddles = new Paddle[Const.MAX_PADDLES];
   PowerUp[] powerUps = new PowerUp[Const.MAX_POWER_UPS];
   Texture[] paddleTextures = new Texture[Const.MAX_PADDLES];
+  Texture[] powerUpTextures = new Texture[PowerUpState.Type.values().length];
   Texture ballTexture;
   Stage stage;
   TextArea chatArea;
   Label scoreLabel;
   Label recordLabel;
+  Sound bounce, drop;
 
   GameScreen(Game game) {
     this.game = game;
@@ -55,6 +58,11 @@ public class GameScreen extends ScreenAdapter {
       paddleTextures[i] = new Texture("paddle" + i + ".png");
     }
     ballTexture = new Texture("ball.png");
+    for (int i = 0; i < powerUpTextures.length; i++) {
+      powerUpTextures[i] = new Texture("powerup" + i + ".png");
+    }
+    bounce = Gdx.audio.newSound(Gdx.files.internal("tock.mp3"));
+    drop = Gdx.audio.newSound(Gdx.files.internal("bottle-break.mp3"));
 
     stage = new Stage(new FitViewport(1280, 720));
     var skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
@@ -159,6 +167,8 @@ public class GameScreen extends ScreenAdapter {
     setPaddleStates(state.paddleStates);
     setBallStates(state.ballStates);
     setPowerUpStates(state.powerUpStates);
+    if (state.bounce) bounce.play();
+    if (state.drop) drop.play();
   }
 
   void setPaddleStates(PaddleState[] paddleStates) {
@@ -198,7 +208,7 @@ public class GameScreen extends ScreenAdapter {
       powerUps[p.id] = null;
     }
     for (PowerUpState p: powerUpStates) {
-      if (powerUps[p.id] == null) powerUps[p.id] = new PowerUp(p.id, ballTexture);
+      if (powerUps[p.id] == null) powerUps[p.id] = new PowerUp(p.id, powerUpTextures[p.type.ordinal()]);
       powerUps[p.id].setState(p);
     }
   }

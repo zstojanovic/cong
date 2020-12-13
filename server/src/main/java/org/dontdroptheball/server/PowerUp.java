@@ -13,6 +13,7 @@ public abstract class PowerUp extends GameElement {
   static short COLLISION_CODE = 4;
 
   Optional<Paddle> paddle = Optional.empty();
+  protected PowerUpState.Type type;
   float diameter = 0.25f;
   float velocity = 1.5f;
   float timer = 5f;
@@ -33,7 +34,7 @@ public abstract class PowerUp extends GameElement {
   }
 
   PowerUpState getState() {
-    return new PowerUpState(id, body.getPosition().x, body.getPosition().y);
+    return new PowerUpState(id, body.getPosition().x, body.getPosition().y, type);
   }
 
   private Body createBody() {
@@ -94,6 +95,7 @@ public abstract class PowerUp extends GameElement {
 class BallFreeze extends PowerUp {
   private BallFreeze(byte id, World world) {
     super(id, world);
+    type = PowerUpState.Type.BALL_FREEZE;
   }
 
   static void create(World world) {
@@ -115,6 +117,7 @@ class BallFreeze extends PowerUp {
 class ExtraBall extends PowerUp {
   private ExtraBall(byte id, World world) {
     super(id, world);
+    type = PowerUpState.Type.EXTRA_BALL;
   }
 
   static void create(World world) {
@@ -139,6 +142,7 @@ class ExtraBall extends PowerUp {
 class PaddleSlowdown extends PowerUp {
   private PaddleSlowdown(byte id, World world) {
     super(id, world);
+    type = PowerUpState.Type.PADDLE_SLOWDOWN;
   }
 
   static void create(World world) {

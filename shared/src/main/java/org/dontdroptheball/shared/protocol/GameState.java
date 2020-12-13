@@ -12,13 +12,18 @@ public class GameState implements Transferable<GameState> {
   public BallState[] ballStates;
   public PaddleState[] paddleStates;
   public PowerUpState[] powerUpStates;
+  public boolean bounce;
+  public boolean drop;
 
   GameState() {
   }
 
   public GameState(
+    boolean bounce, boolean drop,
     float playTimer, float record, BallState[] ballStates, PaddleState[] paddleStates, PowerUpState[] powerUpStates
   ) {
+    this.bounce = bounce;
+    this.drop = drop;
     this.playTimer = playTimer;
     this.record = record;
     this.ballStates = ballStates;
@@ -29,6 +34,7 @@ public class GameState implements Transferable<GameState> {
   @Override
   public void serialize(Serializer serializer) throws SerializationException {
     serializer
+      .serializeBoolean(bounce).serializeBoolean(drop)
       .serializeFloat(playTimer).serializeFloat(record).serializeTransferableArray(ballStates)
       .serializeTransferableArray(paddleStates).serializeTransferableArray(powerUpStates);
   }
@@ -36,6 +42,8 @@ public class GameState implements Transferable<GameState> {
   @Override
   public GameState deserialize(Deserializer deserializer) throws SerializationException {
     return new GameState(
+      deserializer.deserializeBoolean(),
+      deserializer.deserializeBoolean(),
       deserializer.deserializeFloat(),
       deserializer.deserializeFloat(),
       deserializer.deserializeTransferableArray(BallState.EXAMPLE, BallState[]::new),

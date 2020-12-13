@@ -56,6 +56,7 @@ public class Ball extends GameElement {
     fixtureDef.filter.categoryBits = COLLISION_CODE;
     fixtureDef.filter.maskBits = (short)(Paddle.COLLISION_CODE | Ball.COLLISION_CODE);
     body.createFixture(fixtureDef);
+    body.setUserData(this);
     shape.dispose();
     return body;
   }

@@ -33,6 +33,8 @@ public class GameServer extends ApplicationAdapter {
 	float record;
 	Queue<ChatMessage> chatQueue = new LinkedList<>();
 	float powerUpTimer;
+	boolean bounce;
+	boolean drop;
 
 	@Override
 	public void create() {
@@ -52,6 +54,9 @@ public class GameServer extends ApplicationAdapter {
 				if (objectA instanceof Paddle && objectB instanceof PowerUp) {
 					((PowerUp)objectB).trigger((Paddle)objectA);
 				}
+				if (objectA instanceof Ball || objectB instanceof Ball) {
+					bounce = true;
+				}
 			}
 			@Override	public void endContact(Contact contact) {}
 			@Override	public void preSolve(Contact contact, Manifold oldManifold) {}
@@ -67,13 +72,18 @@ public class GameServer extends ApplicationAdapter {
 		handleBalls(delta);
 		handlePowerUps(delta);
 		socketManager.broadcast(getState());
+		bounce = false;
+		drop = false;
 	}
 
 	void handleBalls(float delta) { // Yes, this is how I'm naming this method. No discussion.
 		var dropped = Ball.repo.stream().filter(Ball::dropped).collect(Collectors.toList());
 		var skip = Ball.repo.count() - dropped.size() == 0 ? 1 : 0;
 		dropped.stream().skip(skip).forEach(Ball::dispose);
-		if (skip == 1) startCountdown();
+		if (skip == 1) {
+			drop = true;
+			startCountdown();
+		}
 		if (status == Status.COUNTDOWN) {
 			countdownTimer -= delta;
 			if (countdownTimer <= 0) startPlaying();
@@ -135,6 +145,7 @@ public class GameServer extends ApplicationAdapter {
 
 	private GameState getState() {
 		return new GameState(
+			bounce, drop,
 			playTimer, record,
 			Ball.repo.stream().map(Ball::getState).toArray(BallState[]::new),
 			Paddle.repo.stream().map(Paddle::getState).toArray(PaddleState[]::new),
