@@ -5,14 +5,20 @@ import org.dontdroptheball.shared.Const;
 import org.dontdroptheball.shared.protocol.*;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.DefaultSSLWebSocketServerFactory;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,8 +32,31 @@ public class ServerConnectionManager extends WebSocketServer {
   ServerConnectionManager(GameServer server) {
     super(new InetSocketAddress(PORT));
     this.server = server;
+    handleSSL();
     setTcpNoDelay(true);
     start();
+  }
+
+  void handleSSL() {
+    var keystore = System.getProperty("dontdroptheball.keystore");
+    if (keystore != null) {
+      try {
+        var password = "password";
+        var store = KeyStore.getInstance("JKS");
+        store.load(new FileInputStream(keystore), password.toCharArray());
+        var keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+        keyManagerFactory.init(store, password.toCharArray());
+        var trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
+        trustManagerFactory.init(store);
+        var sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+
+        setWebSocketFactory(new DefaultSSLWebSocketServerFactory(sslContext));
+        logger.info("Loaded SSL certificate from " + keystore);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   @Override
