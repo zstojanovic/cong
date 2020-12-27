@@ -35,6 +35,7 @@ public class GameServer extends ApplicationAdapter {
 	int bounceCount = 0;
 	boolean bounce;
 	boolean drop;
+	boolean collect;
 
 	@Override
 	public void create() {
@@ -52,7 +53,8 @@ public class GameServer extends ApplicationAdapter {
 				var objectA = contact.getFixtureA().getBody().getUserData();
 				var objectB = contact.getFixtureB().getBody().getUserData();
 				if (objectA instanceof Paddle && objectB instanceof PowerUp) {
-					((PowerUp)objectB).trigger((Paddle)objectA);
+					((PowerUp)objectB).collect((Paddle)objectA);
+					collect = true;
 				}
 				if (objectA instanceof Ball || objectB instanceof Ball) {
 					bounceCount++;
@@ -75,6 +77,7 @@ public class GameServer extends ApplicationAdapter {
 		socketManager.broadcast(getState());
 		bounce = false;
 		drop = false;
+		collect = false;
 	}
 
 	void handleBalls(float delta) { // Yes, this is how I'm naming this method. No discussion.
@@ -142,7 +145,7 @@ public class GameServer extends ApplicationAdapter {
 
 	private GameState getState() {
 		return new GameState(
-			bounce, drop,
+			bounce, drop, collect,
 			playTimer, record,
 			Ball.repo.stream().map(Ball::getState).toArray(BallState[]::new),
 			Paddle.repo.stream().map(Paddle::getState).toArray(PaddleState[]::new),

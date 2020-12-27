@@ -18,8 +18,8 @@ public abstract class PowerUp extends GameElement {
   float velocity = 1.5f;
   float timer = 5f;
 
-  enum Stage { EGG, MATURITY };
-  Stage stage = Stage.EGG;
+  enum Stage { CREATED, COLLECTED };
+  Stage stage = Stage.CREATED;
 
   protected PowerUp(byte id, World world) {
     super(id, world);
@@ -30,7 +30,7 @@ public abstract class PowerUp extends GameElement {
   }
 
   static Stream<PowerUp> withBodies() {
-    return repo.stream().filter(p -> p.stage == Stage.EGG);
+    return repo.stream().filter(p -> p.stage == Stage.CREATED);
   }
 
   PowerUpState getState() {
@@ -57,12 +57,12 @@ public abstract class PowerUp extends GameElement {
   }
 
   boolean dropped() {
-    return stage == Stage.EGG &&
+    return stage == Stage.CREATED &&
       (body.getPosition().x < -diameter || body.getPosition().x > (Const.WIDTH + diameter) ||
       body.getPosition().y < -diameter || body.getPosition().y > (Const.HEIGHT + diameter));
   }
 
-  void trigger(Paddle paddle) {
+  void collect(Paddle paddle) {
     this.paddle = Optional.of(paddle);
   }
 
@@ -73,10 +73,10 @@ public abstract class PowerUp extends GameElement {
   }
 
   void step(float delta) {
-    if (stage == Stage.MATURITY) {
+    if (stage == Stage.COLLECTED) {
       timer -= delta;
     } else if (paddle.isPresent()) {
-      stage = Stage.MATURITY;
+      stage = Stage.COLLECTED;
       world.destroyBody(body);
       body = null;
       activate();

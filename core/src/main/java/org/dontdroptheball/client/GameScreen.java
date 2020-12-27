@@ -39,7 +39,7 @@ public class GameScreen extends ScreenAdapter {
   TextArea chatArea;
   Label scoreLabel;
   Label recordLabel;
-  Sound bounce, drop;
+  Sound bounce, drop, collect;
 
   GameScreen(Game game) {
     this.game = game;
@@ -61,8 +61,9 @@ public class GameScreen extends ScreenAdapter {
     for (int i = 0; i < powerUpTextures.length; i++) {
       powerUpTextures[i] = new Texture("powerup" + i + ".png");
     }
-    bounce = Gdx.audio.newSound(Gdx.files.internal("tock.mp3"));
-    drop = Gdx.audio.newSound(Gdx.files.internal("bottle-break.mp3"));
+    bounce = Gdx.audio.newSound(Gdx.files.internal("glass_002.mp3"));
+    drop = Gdx.audio.newSound(Gdx.files.internal("bottlebreak2.mp3"));
+    collect = Gdx.audio.newSound(Gdx.files.internal("confirmation_003.mp3"));
 
     stage = new Stage(new FitViewport(1280, 720));
     var skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
@@ -169,6 +170,7 @@ public class GameScreen extends ScreenAdapter {
     setPowerUpStates(state.powerUpStates);
     if (state.bounce) bounce.play();
     if (state.drop) drop.play();
+    if (state.collect) collect.play();
   }
 
   void setPaddleStates(PaddleState[] paddleStates) {
