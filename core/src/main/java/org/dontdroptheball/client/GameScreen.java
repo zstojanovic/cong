@@ -182,7 +182,7 @@ public class GameScreen extends ScreenAdapter {
     }
     for (PaddleState p: paddleStates) {
       if (paddles[p.index] == null) {
-        paddles[p.index] = new Paddle(p.index, p.location, paddleTextures[p.index]);
+        paddles[p.index] = new Paddle(p.index, p.location, paddleTextures[p.index], p.sizeIncreased);
       } else {
         paddles[p.index].setState(p);
       }

@@ -13,11 +13,13 @@ public class Paddle {
   float width = 1;
   float height = 0.3f;
   float location;
+  boolean sizeIncreased;
   Sprite sprite;
 
-  public Paddle(byte index, float location, Texture texture) {
+  public Paddle(byte index, float location, Texture texture, boolean sizeIncreased) {
     this.index = index;
     this.location = location;
+    this.sizeIncreased = sizeIncreased;
 
     sprite = new Sprite(texture);
     sprite.setSize(width, height);
@@ -27,11 +29,14 @@ public class Paddle {
 
   public void setState(PaddleState state) {
     location = state.location;
+    sizeIncreased = state.sizeIncreased;
     if (state.index != index) Gdx.app.error(logTag, "Illegal state sent from server");
     updateSprite();
   }
 
   public void updateSprite() {
+    sprite.setSize(sizeIncreased ? width * 1.5f : width, height);
+    sprite.setOriginCenter();
     while (location < 0) location = location + Path.LENGTH;
     location = location % Path.LENGTH;
     if (location < Path.POINT1) {

@@ -160,3 +160,26 @@ class PaddleSlowdown extends PowerUp {
     dispose();
   }
 }
+
+class PaddleGrowth extends PowerUp {
+  private PaddleGrowth(byte id, World world) {
+    super(id, world);
+    timer = 15f;
+    type = PowerUpState.Type.PADDLE_GROWTH;
+  }
+
+  static void create(World world) {
+    repo.create(id -> new PaddleGrowth(id, world));
+  }
+
+  @Override
+  void activate() {
+    paddle.ifPresent(Paddle::grow);
+  }
+
+  @Override
+  void deactivate() {
+    paddle.ifPresent(Paddle::resetSize);
+    dispose();
+  }
+}

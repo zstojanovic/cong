@@ -18,6 +18,7 @@ public class Paddle extends GameElement {
   float height = 0.3f;
   float currentSpeed = 0;
   float speedFactor = 1;
+  boolean sizeIncreased = false;
 
   private Paddle(byte id, World world) {
     super(id, world);
@@ -31,22 +32,26 @@ public class Paddle extends GameElement {
   }
 
   PaddleState getState() {
-    return new PaddleState(id, location);
+    return new PaddleState(id, location, sizeIncreased);
   }
 
   private Body createBody() {
     var bodyDef = new BodyDef();
     bodyDef.type = BodyDef.BodyType.KinematicBody;
     var body = world.createBody(bodyDef);
+    body.setUserData(this);
+    setShape(body, width);
+    return body;
+  }
+
+  private void setShape(Body body, float width) {
     var shape = new PolygonShape();
     shape.set(new float[]{-width/2,-height/2, -width/2,height/2, width/2,height/2, width/2,-height/2});
     var fixtureDef = new FixtureDef();
     fixtureDef.shape = shape;
     fixtureDef.filter.categoryBits = COLLISION_CODE;
     body.createFixture(fixtureDef);
-    body.setUserData(this);
     shape.dispose();
-    return body;
   }
 
   void step(float delta) {
@@ -60,6 +65,18 @@ public class Paddle extends GameElement {
 
   void fullSpeed() {
     speedFactor = 1f;
+  }
+
+  void grow() {
+    sizeIncreased = true;
+    body.getFixtureList().forEach(f -> body.destroyFixture(f));
+    setShape(body, width * 1.5f);
+  }
+
+  void resetSize() {
+    sizeIncreased = false;
+    body.getFixtureList().forEach(f -> body.destroyFixture(f));
+    setShape(body, width);
   }
 
   private void updateBodyTransform() {

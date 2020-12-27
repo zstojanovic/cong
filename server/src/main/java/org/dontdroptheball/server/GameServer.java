@@ -37,6 +37,13 @@ public class GameServer extends ApplicationAdapter {
 	boolean drop;
 	boolean collect;
 
+	Runnable[] powerUpRunnables = new Runnable[] {
+		() -> BallFreeze.create(world),
+		() -> ExtraBall.create(world),
+		() -> PaddleSlowdown.create(world),
+		() -> PaddleGrowth.create(world)
+	};
+
 	@Override
 	public void create() {
 		logger.info("Server started");
@@ -104,17 +111,8 @@ public class GameServer extends ApplicationAdapter {
 
 	void handlePowerUps(float delta) {
 		if (bounceCount >= 2 && status == Status.PLAY) {
+			powerUpRunnables[MathUtils.random(powerUpRunnables.length - 1)].run();
 			bounceCount = 0;
-			switch (MathUtils.random(2)) {
-				case 0:
-					BallFreeze.create(world);
-					break;
-				case 1:
-					ExtraBall.create(world);
-					break;
-				case 2:
-					PaddleSlowdown.create(world);
-			}
 		}
 		PowerUp.repo.stream().forEach(p -> p.step(delta));
 	}

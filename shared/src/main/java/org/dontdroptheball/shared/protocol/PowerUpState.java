@@ -6,7 +6,7 @@ import com.github.czyzby.websocket.serialization.impl.Deserializer;
 import com.github.czyzby.websocket.serialization.impl.Serializer;
 
 public class PowerUpState implements Transferable<PowerUpState> {
-  public enum Type {BALL_FREEZE, EXTRA_BALL, PADDLE_SLOWDOWN }
+  public enum Type {BALL_FREEZE, EXTRA_BALL, PADDLE_SLOWDOWN, PADDLE_GROWTH }
 
   static final PowerUpState EXAMPLE = new PowerUpState();
   public byte id;
