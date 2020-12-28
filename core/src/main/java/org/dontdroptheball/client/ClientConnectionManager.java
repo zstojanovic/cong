@@ -11,13 +11,11 @@ import org.dontdroptheball.shared.protocol.*;
 public class ClientConnectionManager extends WebSocketAdapter {
   Game game;
   String logTag = ClientConnectionManager.class.getName();
-  GameScreen gameScreen;
   ProtocolSerializer serializer = new ProtocolSerializer();
   WebSocket socket;
 
-  ClientConnectionManager(Game game, GameScreen gameScreen) {
+  ClientConnectionManager(Game game) {
     this.game = game;
-    this.gameScreen = gameScreen;
     socket = WebSockets.newSocket(game.config.get("serverUrl"));
     socket.addListener(this);
     socket.connect();
@@ -35,13 +33,15 @@ public class ClientConnectionManager extends WebSocketAdapter {
   public boolean onMessage(WebSocket webSocket, byte[] packet) {
     var object = serializer.deserialize(packet);
     if (object instanceof NewPlayerResponse) {
-      gameScreen.handleNewPlayerResponse((NewPlayerResponse)object);
+      game.screen.handleNewPlayerResponse((NewPlayerResponse)object);
     } else if (object instanceof PlayerNames) {
-      gameScreen.handlePlayerNames((PlayerNames)object);
+      game.screen.handlePlayerNames((PlayerNames)object);
     } else if (object instanceof GameState) {
-      gameScreen.setState((GameState)object);
+      game.screen.setState((GameState)object);
     } else if (object instanceof ChatMessage) {
-      gameScreen.receiveChatMessage((ChatMessage)object);
+      game.screen.receiveChatMessage((ChatMessage)object);
+    } else if (object instanceof RecordStats) {
+      game.title.handleRecordStats((RecordStats)object);
     } else {
       Gdx.app.error(logTag, "Unexpected object: " + object.getClass().getCanonicalName());
     }
@@ -51,12 +51,6 @@ public class ClientConnectionManager extends WebSocketAdapter {
   @Override
   public boolean onError(WebSocket webSocket, Throwable error) {
     Gdx.app.error(logTag, "Error: " + (error == null ? "null" : error.getMessage()));
-    return FULLY_HANDLED;
-  }
-
-  @Override
-  public boolean onOpen(WebSocket webSocket) {
-    send(new NewPlayerRequest(game.getPlayerName()));
     return FULLY_HANDLED;
   }
 

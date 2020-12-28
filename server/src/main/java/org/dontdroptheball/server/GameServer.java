@@ -30,7 +30,8 @@ public class GameServer extends ApplicationAdapter {
 	World world;
 	float countdownTimer;
 	float playTimer;
-	float record;
+	float recordTime;
+	String[] recordNames;
 	Queue<ChatMessage> chatQueue = new LinkedList<>();
 	int bounceCount = 0;
 	boolean bounce;
@@ -48,7 +49,8 @@ public class GameServer extends ApplicationAdapter {
 	public void create() {
 		logger.info("Server started");
 		preferences = Gdx.app.getPreferences("dontdroptheball-server");
-		record = preferences.getFloat("record");
+		recordTime = preferences.getFloat("record.time");
+		recordNames = preferences.getString("record.names").split(",");
 		socketManager = new ServerConnectionManager(this);
 		world = new World(Vector2.Zero, true);
 		Ball.create(world);
@@ -120,9 +122,11 @@ public class GameServer extends ApplicationAdapter {
 	void startCountdown() {
 		status = Status.COUNTDOWN;
 		countdownTimer = 3;
-		if (playTimer > record) {
-			record = playTimer;
-			preferences.putFloat("record", record);
+		if (playTimer > recordTime) {
+			recordTime = playTimer;
+			recordNames = Player.repo.stream().map(a -> a.name).toArray(String[]::new);
+			preferences.putFloat("record.time", recordTime);
+			preferences.putString("record.names", String.join(",", recordNames));
 			preferences.flush();
 		}
 		PowerUp.withBodies().forEach(PowerUp::dispose);
@@ -144,10 +148,26 @@ public class GameServer extends ApplicationAdapter {
 	private GameState getState() {
 		return new GameState(
 			bounce, drop, collect,
-			playTimer, record,
+			playTimer, recordTime,
 			Ball.repo.stream().map(Ball::getState).toArray(BallState[]::new),
 			Paddle.repo.stream().map(Paddle::getState).toArray(PaddleState[]::new),
 			PowerUp.withBodies().map(PowerUp::getState).toArray(PowerUpState[]::new));
+	}
+
+	RecordStats getRecordStats() {
+		if (recordNames.length == 0) return new RecordStats("");
+		var builder =
+			new StringBuilder("RECORD OF ").append((int)recordTime).append("s WITHOUT ACCIDENT SET BY ");
+		for (int i = 0; i < (recordNames.length - 1); i++) {
+			builder.append(recordNames[i].toUpperCase());
+			if (i == recordNames.length - 2) {
+				builder.append(" AND ");
+			} else {
+				builder.append(", ");
+			}
+		}
+		builder.append(recordNames[recordNames.length - 1].toUpperCase());
+		return new RecordStats(builder.toString());
 	}
 
 	Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {

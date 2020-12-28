@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 public class GameScreen extends ScreenAdapter {
   Game game;
-  ClientConnectionManager connectionManager;
   SpriteBatch batch;
   OrthographicCamera camera;
   FitViewport viewport;
@@ -76,7 +75,7 @@ public class GameScreen extends ScreenAdapter {
     messageArea.setBlinkTime(1);
     messageArea.setTextFieldListener((field, c) -> {
       if ((c == '\r' || c == '\n') && !field.getText().isEmpty()) {
-        connectionManager.send(field.getText());
+        game.connectionManager.send(field.getText());
         field.setText("");
       }
     });
@@ -109,7 +108,7 @@ public class GameScreen extends ScreenAdapter {
     multiplexer.addProcessor(stage);
 
     Gdx.input.setInputProcessor(multiplexer);
-    connectionManager = new ClientConnectionManager(game, this);
+    game.connectionManager.send(new NewPlayerRequest(game.getPlayerName()));
   }
 
   @Override
@@ -145,21 +144,16 @@ public class GameScreen extends ScreenAdapter {
   private class InputHandler extends InputAdapter {
     @Override
     public boolean keyDown(int keyCode) {
-      if (keyCode == Input.Keys.LEFT) connectionManager.send(new KeyEvent(KeyEvent.Code.LEFT_PRESSED));
-      if (keyCode == Input.Keys.RIGHT) connectionManager.send(new KeyEvent(KeyEvent.Code.RIGHT_PRESSED));
+      if (keyCode == Input.Keys.LEFT) game.connectionManager.send(new KeyEvent(KeyEvent.Code.LEFT_PRESSED));
+      if (keyCode == Input.Keys.RIGHT) game.connectionManager.send(new KeyEvent(KeyEvent.Code.RIGHT_PRESSED));
       return true;
     }
     @Override
     public boolean keyUp(int keyCode) {
-      if (keyCode == Input.Keys.LEFT) connectionManager.send(new KeyEvent(KeyEvent.Code.LEFT_RELEASED));
-      if (keyCode == Input.Keys.RIGHT) connectionManager.send(new KeyEvent(KeyEvent.Code.RIGHT_RELEASED));
+      if (keyCode == Input.Keys.LEFT) game.connectionManager.send(new KeyEvent(KeyEvent.Code.LEFT_RELEASED));
+      if (keyCode == Input.Keys.RIGHT) game.connectionManager.send(new KeyEvent(KeyEvent.Code.RIGHT_RELEASED));
       return true;
     }
-  }
-
-  @Override
-  public void hide() {
-    connectionManager.dispose();
   }
 
   void setState(GameState state) {
