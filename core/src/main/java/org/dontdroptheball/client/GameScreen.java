@@ -4,11 +4,11 @@ import com.badlogic.gdx.*;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
@@ -23,10 +23,9 @@ import java.util.stream.Collectors;
 public class GameScreen extends ScreenAdapter {
   Game game;
   SpriteBatch batch;
-  OrthographicCamera camera;
+  ShakeableCamera camera;
   FitViewport viewport;
   Texture background;
-  Texture panel;
   Ball[] balls = new Ball[Const.MAX_BALLS];
   Player[] players = new Player[Const.MAX_PLAYERS];
   Paddle[] paddles = new Paddle[Const.MAX_PADDLES];
@@ -46,13 +45,12 @@ public class GameScreen extends ScreenAdapter {
 
   @Override
   public void show() {
-    camera = new OrthographicCamera(game.WIDTH, game.HEIGHT);
+    camera = new ShakeableCamera(game.WIDTH, game.HEIGHT);
     camera.position.set(camera.viewportWidth/2f, camera.viewportHeight/2f, 0);
     camera.update();
     viewport = new FitViewport(game.WIDTH, game.HEIGHT, camera);
     batch = new SpriteBatch();
     background = new Texture("background.png");
-    panel = new Texture("panel.png");
     for (int i = 0; i < Const.MAX_PADDLES; i++) {
       paddleTextures[i] = new Texture("paddle" + i + ".png");
     }
@@ -66,6 +64,10 @@ public class GameScreen extends ScreenAdapter {
 
     stage = new Stage(new FitViewport(1280, 720));
     var skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+
+    var panel = new Image(new Texture("panel.png"));
+    panel.setScale(0.5f);
+    panel.setPosition(880, 0);
 
     var messageArea = new TextArea("", skin);
     messageArea.setSize(400, 60);
@@ -97,6 +99,7 @@ public class GameScreen extends ScreenAdapter {
     recordLabel.setWidth(88);
     recordLabel.setPosition(896, 615);
 
+    stage.addActor(panel);
     stage.addActor(scoreLabel);
     stage.addActor(recordLabel);
     stage.addActor(messageArea);
@@ -128,7 +131,6 @@ public class GameScreen extends ScreenAdapter {
     for (PowerUp p: powerUps) {
       if (p != null) p.render(batch);
     }
-    batch.draw(panel, 11, 0, 5, 9);
     batch.end();
     stage.draw();
   }
@@ -162,8 +164,11 @@ public class GameScreen extends ScreenAdapter {
     setPaddleStates(state.paddleStates);
     setBallStates(state.ballStates);
     setPowerUpStates(state.powerUpStates);
+    if (state.drop) {
+      drop.play();
+      camera.shake();
+    }
     if (state.bounce) bounce.play();
-    if (state.drop) drop.play();
     if (state.collect) collect.play();
   }
 
