@@ -27,18 +27,17 @@ public class Paddle {
     updateSprite();
   }
 
+  // TODO I guess setState/updateSprite/render could be optimized, but it doesn't seem to cause problems right now
+
   public void setState(PaddleState state) {
     location = state.location;
     sizeIncreased = state.sizeIncreased;
     if (state.index != index) Gdx.app.error(logTag, "Illegal state sent from server");
-    updateSprite();
   }
 
   public void updateSprite() {
     sprite.setSize(sizeIncreased ? width * 1.5f : width, height);
     sprite.setOriginCenter();
-    while (location < 0) location = location + Path.LENGTH;
-    location = location % Path.LENGTH;
     if (location < Path.POINT1) {
       sprite.setCenter(location + Path.OFFSET, Path.OFFSET);
       sprite.setRotation(0);
@@ -55,6 +54,7 @@ public class Paddle {
   }
 
   public void render(SpriteBatch batch) {
+    updateSprite();
     sprite.draw(batch);
   }
 }
