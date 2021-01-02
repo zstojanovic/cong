@@ -35,6 +35,7 @@ public class GameScreen extends ScreenAdapter {
   Texture ballTexture;
   Stage stage;
   TextArea chatArea;
+  String chatText = "";
   Label scoreLabel;
   Label recordLabel;
   Sound bounce, drop, collect;
@@ -83,7 +84,7 @@ public class GameScreen extends ScreenAdapter {
       }
     });
 
-    chatArea = new TextArea("", skin);
+    chatArea = new TextArea(chatText, skin);
     chatArea.setSize(400, 524);
     chatArea.setPosition(880, 60);
     chatArea.setFocusTraversal(false);
@@ -133,6 +134,8 @@ public class GameScreen extends ScreenAdapter {
       if (paddle != null) paddle.render(batch);
     }
     batch.end();
+    chatArea.setText(chatText);
+    chatArea.setCursorPosition(chatText.length());
     stage.draw();
   }
 
@@ -223,12 +226,11 @@ public class GameScreen extends ScreenAdapter {
     } else {
       m = "(" + message.timestamp + ") " + players[message.playerId].name + ":\n" + message.text;
     }
-    var lines = (chatArea.getText() + m).split("\\r?\\n");
+    var lines = (chatText + m).split("\\r?\\n");
     var newText = new StringBuilder();
     var skipCount = Math.max(0, lines.length - (Const.MESSAGE_LIMIT * 2));
     Arrays.stream(lines).skip(skipCount).forEach(s -> newText.append(s).append("\n"));
-    chatArea.setText(newText.toString());
-    chatArea.setCursorPosition(newText.length());
+    chatText = newText.toString();
   }
 
   void handlePlayerNames(PlayerNames playerNames) {
