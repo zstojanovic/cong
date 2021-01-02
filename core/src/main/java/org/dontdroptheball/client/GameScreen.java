@@ -123,14 +123,14 @@ public class GameScreen extends ScreenAdapter {
 
     batch.begin();
     batch.draw(background, 0, 0, 16, 9);
+    for (PowerUp p: powerUps) {
+      if (p != null) p.render(batch, delta);
+    }
     for (Ball ball: balls) {
       if (ball != null) ball.render(batch);
     }
     for (Paddle paddle : paddles) {
       if (paddle != null) paddle.render(batch);
-    }
-    for (PowerUp p: powerUps) {
-      if (p != null) p.render(batch);
     }
     batch.end();
     stage.draw();

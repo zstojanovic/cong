@@ -21,7 +21,8 @@ public class PowerUp {
     sprite.setCenter(state.x, state.y);
   }
 
-  public void render(SpriteBatch batch) {
+  public void render(SpriteBatch batch, float delta) {
+    sprite.rotate(delta * 100);
     sprite.draw(batch);
   }
 }
