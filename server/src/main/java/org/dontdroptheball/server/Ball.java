@@ -14,6 +14,7 @@ public class Ball extends GameElement {
 
   float diameter = 0.5f;
   float velocity = 2.5f;
+  float freezeTimer;
 
   private Ball(byte id, World world) {
     super(id, world);
@@ -67,12 +68,22 @@ public class Ball extends GameElement {
       body.getPosition().y < -diameter || body.getPosition().y > (Const.HEIGHT + diameter);
   }
 
-  void freeze() {
-    body.setActive(false);
+  void step(float delta) {
+    var diff = Math.abs(body.getLinearVelocity().len() - velocity);
+    if (diff > 0.05f) {
+      body.setLinearVelocity(body.getLinearVelocity().setLength(velocity));
+    }
+    if (freezeTimer > 0) {
+      freezeTimer -= delta;
+      if (freezeTimer <= 0) {
+        body.setActive(true);
+      }
+    }
   }
 
-  void unfreeze() {
-    body.setActive(true);
+  void freeze() {
+    freezeTimer = 5f;
+    body.setActive(false);
   }
 
   void dispose() {

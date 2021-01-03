@@ -18,7 +18,8 @@ public class Paddle extends GameElement {
   float height = 0.3f;
   float currentSpeed = 0;
   float speedFactor = 1;
-  boolean sizeIncreased = false;
+  float slowdownTimer;
+  float sizeIncreaseTimer;
 
   private Paddle(byte id, World world) {
     super(id, world);
@@ -32,7 +33,7 @@ public class Paddle extends GameElement {
   }
 
   PaddleState getState() {
-    return new PaddleState(id, location, sizeIncreased);
+    return new PaddleState(id, location, sizeIncreaseTimer > 0);
   }
 
   private Body createBody() {
@@ -57,26 +58,30 @@ public class Paddle extends GameElement {
   void step(float delta) {
     location = location + (currentSpeed * speedFactor * delta);
     updateBodyTransform();
+    if (slowdownTimer > 0) {
+      slowdownTimer -= delta;
+      if (slowdownTimer <= 0) {
+        speedFactor = 1f;
+      }
+    }
+    if (sizeIncreaseTimer > 0) {
+      sizeIncreaseTimer -= delta;
+      if (sizeIncreaseTimer <= 0) {
+        body.getFixtureList().forEach(f -> body.destroyFixture(f));
+        setShape(body, width);
+      }
+    }
   }
 
   void slowdown() {
+    slowdownTimer = 5f;
     speedFactor = 0.5f;
   }
 
-  void fullSpeed() {
-    speedFactor = 1f;
-  }
-
-  void grow() {
-    sizeIncreased = true;
+  void increaseSize() {
+    sizeIncreaseTimer = 15f;
     body.getFixtureList().forEach(f -> body.destroyFixture(f));
     setShape(body, width * 1.5f);
-  }
-
-  void resetSize() {
-    sizeIncreased = false;
-    body.getFixtureList().forEach(f -> body.destroyFixture(f));
-    setShape(body, width);
   }
 
   private void updateBodyTransform() {

@@ -20,6 +20,11 @@ public class Player extends Identifiable {
     return repo.create(id -> new Player(id, name, paddle));
   }
 
+  @Override
+  public String toString() {
+    return "Player" + id + " (" + name + ")";
+  }
+
   void dispose() {
     paddle.ifPresent(Paddle::dispose);
     repo.remove(this);

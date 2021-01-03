@@ -74,7 +74,7 @@ public class ServerConnectionManager extends WebSocketServer {
   public void onClose(WebSocket socket, int code, String reason, boolean remote) {
     var player = socketMap.get(socket);
     if (player != null) {
-      logger.info("Player " + player.id + " disconnected");
+      logger.info(player + " disconnected");
       server.disconnectPlayer(player);
     } else {
       logger.info(socket + " disconnected");
@@ -99,7 +99,7 @@ public class ServerConnectionManager extends WebSocketServer {
       var newPlayer = server.createNewPlayer((NewPlayerRequest)object, socket);
       if (newPlayer.isPresent()) {
         socketMap.put(socket, newPlayer.get());
-        logger.info("Player " + newPlayer.get().id + " created");
+        logger.info(newPlayer.get() + " created");
       } else {
         logger.error("Too many players");
       }

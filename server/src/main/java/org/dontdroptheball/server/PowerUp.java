@@ -6,7 +6,6 @@ import org.dontdroptheball.shared.Const;
 import org.dontdroptheball.shared.protocol.PowerUpState;
 
 import java.util.Optional;
-import java.util.stream.Stream;
 
 public abstract class PowerUp extends GameElement {
   static Repository<PowerUp> repo = new Repository<>(new PowerUp[Const.MAX_POWER_UPS]);
@@ -16,21 +15,14 @@ public abstract class PowerUp extends GameElement {
   protected PowerUpState.Type type;
   float diameter = 0.25f;
   float velocity = 1.5f;
-  float timer = 5f;
 
-  enum Stage { CREATED, COLLECTED };
-  Stage stage = Stage.CREATED;
-
-  protected PowerUp(byte id, World world) {
+  protected PowerUp(byte id, World world, PowerUpState.Type type) {
     super(id, world);
+    this.type = type;
     body = createBody();
     var direction = MathUtils.random() * MathUtils.PI2;
     body.setTransform(Const.WIDTH/2, Const.HEIGHT/2, 0);
     body.setLinearVelocity(MathUtils.cos(direction) * velocity, MathUtils.sin(direction) * velocity);
-  }
-
-  static Stream<PowerUp> withBodies() {
-    return repo.stream().filter(p -> p.stage == Stage.CREATED);
   }
 
   PowerUpState getState() {
@@ -57,7 +49,7 @@ public abstract class PowerUp extends GameElement {
   }
 
   boolean dropped() {
-    return stage == Stage.CREATED &&
+    return
       (body.getPosition().x < -diameter || body.getPosition().x > (Const.WIDTH + diameter) ||
       body.getPosition().y < -diameter || body.getPosition().y > (Const.HEIGHT + diameter));
   }
@@ -68,22 +60,15 @@ public abstract class PowerUp extends GameElement {
 
   abstract void activate();
 
-  void deactivate() {
-    dispose();
-  }
-
   void step(float delta) {
-    if (stage == Stage.COLLECTED) {
-      timer -= delta;
-    } else if (paddle.isPresent()) {
-      stage = Stage.COLLECTED;
+    if (paddle.isPresent()) {
       world.destroyBody(body);
       body = null;
       activate();
+      dispose();
     } else if (dropped()) {
       dispose();
     }
-    if (timer < 0) deactivate();
   }
 
   void dispose() {
@@ -94,8 +79,7 @@ public abstract class PowerUp extends GameElement {
 
 class BallFreeze extends PowerUp {
   private BallFreeze(byte id, World world) {
-    super(id, world);
-    type = PowerUpState.Type.BALL_FREEZE;
+    super(id, world, PowerUpState.Type.BALL_FREEZE);
   }
 
   static void create(World world) {
@@ -106,18 +90,11 @@ class BallFreeze extends PowerUp {
   void activate() {
     Ball.repo.stream().forEach(Ball::freeze);
   }
-
-  @Override
-  void deactivate() {
-    Ball.repo.stream().forEach(Ball::unfreeze);
-    dispose();
-  }
 }
 
 class ExtraBall extends PowerUp {
   private ExtraBall(byte id, World world) {
-    super(id, world);
-    type = PowerUpState.Type.EXTRA_BALL;
+    super(id, world, PowerUpState.Type.EXTRA_BALL);
   }
 
   static void create(World world) {
@@ -135,14 +112,12 @@ class ExtraBall extends PowerUp {
         newBall.startPlaying(Ball.repo.first().body.getAngle() + MathUtils.PI);
       }
     });
-    deactivate();
   }
 }
 
 class PaddleSlowdown extends PowerUp {
   private PaddleSlowdown(byte id, World world) {
-    super(id, world);
-    type = PowerUpState.Type.PADDLE_SLOWDOWN;
+    super(id, world, PowerUpState.Type.PADDLE_SLOWDOWN);
   }
 
   static void create(World world) {
@@ -153,19 +128,11 @@ class PaddleSlowdown extends PowerUp {
   void activate() {
     paddle.ifPresent(Paddle::slowdown);
   }
-
-  @Override
-  void deactivate() {
-    paddle.ifPresent(Paddle::fullSpeed);
-    dispose();
-  }
 }
 
 class PaddleGrowth extends PowerUp {
   private PaddleGrowth(byte id, World world) {
-    super(id, world);
-    timer = 15f;
-    type = PowerUpState.Type.PADDLE_GROWTH;
+    super(id, world, PowerUpState.Type.PADDLE_GROWTH);
   }
 
   static void create(World world) {
@@ -174,12 +141,6 @@ class PaddleGrowth extends PowerUp {
 
   @Override
   void activate() {
-    paddle.ifPresent(Paddle::grow);
-  }
-
-  @Override
-  void deactivate() {
-    paddle.ifPresent(Paddle::resetSize);
-    dispose();
+    paddle.ifPresent(Paddle::increaseSize);
   }
 }

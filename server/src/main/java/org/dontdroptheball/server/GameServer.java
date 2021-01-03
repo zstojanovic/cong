@@ -90,6 +90,7 @@ public class GameServer extends ApplicationAdapter {
 	}
 
 	void handleBalls(float delta) { // Yes, this is how I'm naming this method. No discussion.
+		Ball.repo.stream().forEach(b -> b.step(delta));
 		var dropped = Ball.repo.stream().filter(Ball::dropped).collect(Collectors.toList());
 		var skip = Ball.repo.count() - dropped.size() == 0 ? 1 : 0;
 		dropped.stream().skip(skip).forEach(Ball::dispose);
@@ -103,12 +104,6 @@ public class GameServer extends ApplicationAdapter {
 		} else {
 			playTimer += delta;
 		}
-		Ball.repo.stream().forEach(b -> {
-			var diff = Math.abs(b.body.getLinearVelocity().len() - b.velocity);
-			if (diff > 0.05f) {
-				b.body.setLinearVelocity(b.body.getLinearVelocity().setLength(b.velocity));
-			}
-		});
 	}
 
 	void handlePowerUps(float delta) {
@@ -129,7 +124,7 @@ public class GameServer extends ApplicationAdapter {
 			preferences.putString("record.names", String.join(",", recordNames));
 			preferences.flush();
 		}
-		PowerUp.withBodies().forEach(PowerUp::dispose);
+		PowerUp.repo.stream().forEach(PowerUp::dispose);
 		Ball.repo.first().startCountdown();
 	}
 
@@ -151,7 +146,7 @@ public class GameServer extends ApplicationAdapter {
 			playTimer, recordTime,
 			Ball.repo.stream().map(Ball::getState).toArray(BallState[]::new),
 			Paddle.repo.stream().map(Paddle::getState).toArray(PaddleState[]::new),
-			PowerUp.withBodies().map(PowerUp::getState).toArray(PowerUpState[]::new));
+			PowerUp.repo.stream().map(PowerUp::getState).toArray(PowerUpState[]::new));
 	}
 
 	RecordStats getRecordStats() {
