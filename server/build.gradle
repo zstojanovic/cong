@@ -1,7 +1,7 @@
 apply plugin: 'application'
 
 sourceCompatibility = 11.0
-mainClassName = 'org.dontdroptheball.server.GameServer'
+mainClassName = 'org.cong.server.GameServer'
 eclipse.project.name = appName + '-server'
 
 dependencies {

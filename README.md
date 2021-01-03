@@ -1,8 +1,7 @@
-# Don't drop the ball!
+# Cong - a cooperative pong
 
 A work in progress experimental not so massively multiplayer online cooperative arcade game and/or chat app.
 
 ### TODO
-- clean up code
-- add polish
+- improve chat
 - lag compensation

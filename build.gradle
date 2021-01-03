@@ -26,7 +26,7 @@ configure(subprojects) {
 
 subprojects {
 	version = '0.0.1-SNAPSHOT'
-	ext.appName = 'dontdroptheball'
+	ext.appName = 'cong'
 	repositories {
 		mavenLocal()
 		mavenCentral()
@@ -36,4 +36,4 @@ subprojects {
 	}
 }
 
-eclipse.project.name = 'dontdroptheball' + '-parent'
+eclipse.project.name = 'cong' + '-parent'

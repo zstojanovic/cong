@@ -1,7 +1,7 @@
 apply plugin: 'application'
 
 sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]
-mainClassName = 'org.dontdroptheball.desktop.DesktopLauncher'
+mainClassName = 'org.cong.desktop.DesktopLauncher'
 eclipse.project.name = appName + '-desktop'
 sourceCompatibility = 11.0
 
