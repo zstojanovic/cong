@@ -123,6 +123,7 @@ public class GameServer extends ApplicationAdapter {
 			preferences.putFloat("record.time", recordTime);
 			preferences.putString("record.names", String.join(",", recordNames));
 			preferences.flush();
+			getRecordText(false).ifPresent(text -> handleMessage(new ChatMessage(getTimestamp(), text)));
 		}
 		PowerUp.repo.stream().forEach(PowerUp::dispose);
 		Ball.repo.first().startCountdown();
@@ -149,20 +150,26 @@ public class GameServer extends ApplicationAdapter {
 			PowerUp.repo.stream().map(PowerUp::getState).toArray(PowerUpState[]::new));
 	}
 
-	RecordStats getRecordStats() {
-		if (recordNames.length == 0) return new RecordStats("");
-		var builder =
-			new StringBuilder("RECORD OF ").append((int)recordTime).append("s WITHOUT ACCIDENT SET BY ");
+	Optional<RecordStats> getRecordStats() {
+		return getRecordText(true).map(RecordStats::new);
+	}
+
+	Optional<String> getRecordText(boolean upper) {
+		if (recordNames.length == 0) return Optional.empty();
+		var firstPart = String.format(upper ? "RECORD OF %s" : "Record of %s", (int)recordTime + "s");
+		var secondPartBuilder =
+			new StringBuilder(" without accident set by ");
 		for (int i = 0; i < (recordNames.length - 1); i++) {
-			builder.append(recordNames[i].toUpperCase());
+			secondPartBuilder.append(recordNames[i]);
 			if (i == recordNames.length - 2) {
-				builder.append(" AND ");
+				secondPartBuilder.append(" and ");
 			} else {
-				builder.append(", ");
+				secondPartBuilder.append(", ");
 			}
 		}
-		builder.append(recordNames[recordNames.length - 1].toUpperCase());
-		return new RecordStats(builder.toString());
+		secondPartBuilder.append(recordNames[recordNames.length - 1]);
+		var secondPart = upper ? secondPartBuilder.toString().toUpperCase() : secondPartBuilder.toString();
+		return Optional.of(firstPart + secondPart);
 	}
 
 	Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {

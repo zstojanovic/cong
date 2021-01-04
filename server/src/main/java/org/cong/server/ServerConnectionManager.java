@@ -66,7 +66,7 @@ public class ServerConnectionManager extends WebSocketServer {
       socket.close();
     } else {
       logger.info(socket.getRemoteSocketAddress() + " new connection");
-      send(socket, server.getRecordStats());
+      server.getRecordStats().ifPresent(stats -> send(socket, stats));
     }
   }
 
