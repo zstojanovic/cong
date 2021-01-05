@@ -172,6 +172,10 @@ public class GameServer extends ApplicationAdapter {
 		return Optional.of(firstPart + secondPart);
 	}
 
+	void handleRecordStatsRequest(WebSocket socket) {
+		getRecordStats().ifPresent(stats -> socketManager.send(socket, stats));
+	}
+
 	Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {
 		var paddle = Paddle.create(world);
 		if (paddle.isEmpty()) logger.warn("All paddles occupied");

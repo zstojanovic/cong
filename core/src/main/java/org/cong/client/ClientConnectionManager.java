@@ -30,6 +30,12 @@ public class ClientConnectionManager extends WebSocketAdapter {
   }
 
   @Override
+  public boolean onOpen(WebSocket webSocket) {
+    send(new RecordStatsRequest());
+    return FULLY_HANDLED;
+  }
+
+  @Override
   public boolean onMessage(WebSocket webSocket, byte[] packet) {
     var object = serializer.deserialize(packet);
     if (object instanceof NewPlayerResponse) {

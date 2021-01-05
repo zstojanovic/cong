@@ -23,6 +23,7 @@ public class TitleScreen extends ScreenAdapter {
   Texture title;
   Stage stage;
   TextField recordLabel;
+  String recordText;
   float position = 0;
   int direction = -1;
 
@@ -62,7 +63,7 @@ public class TitleScreen extends ScreenAdapter {
     TextField.TextFieldStyle recordStyle = new TextField.TextFieldStyle(
       new BitmapFont(Gdx.files.internal("ui/nimbus-sans-l-bold-24.fnt")),
       new Color(0xe3c615ff), null, null, null);
-    recordLabel = new TextField("", recordStyle);
+    recordLabel = new TextField(recordText, recordStyle);
     recordLabel.setAlignment(Align.center);
     recordLabel.setWidth(900);
     recordLabel.setPosition(195, 32);
@@ -75,7 +76,8 @@ public class TitleScreen extends ScreenAdapter {
   }
 
   void handleRecordStats(RecordStats stats) {
-    recordLabel.setText(stats.text);
+    recordText = stats.text;
+    if (recordLabel != null) recordLabel.setText(recordText);
   }
 
   @Override

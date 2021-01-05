@@ -66,7 +66,6 @@ public class ServerConnectionManager extends WebSocketServer {
       socket.close();
     } else {
       logger.info(socket.getRemoteSocketAddress() + " new connection");
-      server.getRecordStats().ifPresent(stats -> send(socket, stats));
     }
   }
 
@@ -95,7 +94,9 @@ public class ServerConnectionManager extends WebSocketServer {
   public void onMessage(WebSocket socket, ByteBuffer message) {
     Object object = serializer.deserialize(message.array());
     var player = socketMap.get(socket);
-    if (object instanceof NewPlayerRequest) {
+    if (object instanceof RecordStatsRequest) {
+      server.handleRecordStatsRequest(socket);
+    } else if (object instanceof NewPlayerRequest) {
       var newPlayer = server.createNewPlayer((NewPlayerRequest)object, socket);
       if (newPlayer.isPresent()) {
         socketMap.put(socket, newPlayer.get());
