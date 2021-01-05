@@ -123,7 +123,10 @@ public class GameServer extends ApplicationAdapter {
 			preferences.putFloat("record.time", recordTime);
 			preferences.putString("record.names", String.join(",", recordNames));
 			preferences.flush();
-			getRecordText(false).ifPresent(text -> handleMessage(new ChatMessage(getTimestamp(), text)));
+			getRecordText(false).ifPresent(text -> {
+				logger.info(text);
+				handleMessage(new ChatMessage(getTimestamp(), text));
+			});
 		}
 		PowerUp.repo.stream().forEach(PowerUp::dispose);
 		Ball.repo.first().startCountdown();
@@ -190,6 +193,7 @@ public class GameServer extends ApplicationAdapter {
 	}
 
 	void handleMessage(Player player, String message) {
+		logger.info("[Message] " + player.name + ": " + message);
 		handleMessage(new ChatMessage(getTimestamp(), player.id, message));
 	}
 
