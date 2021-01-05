@@ -75,7 +75,6 @@ public class GameScreen extends ScreenAdapter {
     messageArea.setSize(400, 60);
     messageArea.setPosition(880, 0);
     messageArea.setMaxLength(80);
-    messageArea.setFocusTraversal(false);
     messageArea.setBlinkTime(1);
     messageArea.setTextFieldListener((field, c) -> {
       if ((c == '\r' || c == '\n') && !field.getText().isEmpty()) {
