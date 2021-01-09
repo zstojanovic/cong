@@ -7,14 +7,14 @@ import org.cong.client.Game;
 
 public class DesktopLauncher {
 
-	public static void main(String[] args) {
-		CommonWebSockets.initiate();
+  public static void main(String[] args) {
+    CommonWebSockets.initiate();
 
-		Lwjgl3ApplicationConfiguration configuration = new Lwjgl3ApplicationConfiguration();
-		configuration.setTitle("Cong");
-		configuration.setWindowedMode(1280, 720);
-		configuration.setBackBufferConfig(8, 8, 8, 8, 16, 0, 3);
+    Lwjgl3ApplicationConfiguration configuration = new Lwjgl3ApplicationConfiguration();
+    configuration.setTitle("Cong");
+    configuration.setWindowedMode(1280, 720);
+    configuration.setBackBufferConfig(8, 8, 8, 8, 16, 0, 3);
 
-		new Lwjgl3Application(new Game(), configuration);
-	}
+    new Lwjgl3Application(new Game(), configuration);
+  }
 }

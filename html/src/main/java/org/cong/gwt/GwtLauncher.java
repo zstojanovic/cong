@@ -8,16 +8,16 @@ import org.cong.client.Game;
 
 public class GwtLauncher extends GwtApplication {
 
-	@Override
-	public GwtApplicationConfiguration getConfig() {
-		var config = new GwtApplicationConfiguration(1280, 720);
-		config.antialiasing = true;
-		return config;
-	}
+  @Override
+  public GwtApplicationConfiguration getConfig() {
+    var config = new GwtApplicationConfiguration(1280, 720);
+    config.antialiasing = true;
+    return config;
+  }
 
-	@Override
-	public ApplicationListener createApplicationListener () {
-		GwtWebSockets.initiate();
-		return new Game();
-	}
+  @Override
+  public ApplicationListener createApplicationListener () {
+    GwtWebSockets.initiate();
+    return new Game();
+  }
 }
