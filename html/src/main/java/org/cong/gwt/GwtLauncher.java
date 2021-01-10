@@ -11,6 +11,7 @@ public class GwtLauncher extends GwtApplication {
   @Override
   public GwtApplicationConfiguration getConfig() {
     var config = new GwtApplicationConfiguration(1280, 720);
+    config.useAccelerometer = false;
     config.antialiasing = true;
     return config;
   }

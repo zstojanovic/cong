@@ -39,13 +39,13 @@ public class ClientConnectionManager extends WebSocketAdapter {
   public boolean onMessage(WebSocket webSocket, byte[] packet) {
     var object = serializer.deserialize(packet);
     if (object instanceof NewPlayerResponse) {
-      game.screen.handleNewPlayerResponse((NewPlayerResponse)object);
+      if (game.screen.isShown) game.screen.handleNewPlayerResponse((NewPlayerResponse)object);
     } else if (object instanceof PlayerNames) {
-      game.screen.handlePlayerNames((PlayerNames)object);
+      if (game.screen.isShown) game.screen.handlePlayerNames((PlayerNames)object);
     } else if (object instanceof GameState) {
-      game.screen.setState((GameState)object);
+      if (game.screen.isShown) game.screen.setState((GameState)object);
     } else if (object instanceof ChatMessage) {
-      game.screen.receiveChatMessage((ChatMessage)object);
+      if (game.screen.isShown) game.screen.receiveChatMessage((ChatMessage)object);
     } else if (object instanceof RecordStats) {
       game.title.handleRecordStats((RecordStats)object);
     } else {

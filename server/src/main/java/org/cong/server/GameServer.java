@@ -193,7 +193,7 @@ public class GameServer extends ApplicationAdapter {
   }
 
   void handleMessage(Player player, String message) {
-    logger.info("[Message] " + player.name + ": " + message);
+    logger.info("[Message] " + player.name + ": " + message.trim());
     handleMessage(new ChatMessage(getTimestamp(), player.id, message));
   }
 

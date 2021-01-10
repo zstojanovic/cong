@@ -75,6 +75,7 @@ public class ServerConnectionManager extends WebSocketServer {
     if (player != null) {
       logger.info(player + " disconnected");
       server.disconnectPlayer(player);
+      socketMap.remove(socket);
     } else {
       logger.info(socket + " disconnected");
     }

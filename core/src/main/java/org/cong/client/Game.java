@@ -33,7 +33,11 @@ public class Game extends com.badlogic.gdx.Game {
 
   void savePlayerName(String name) {
     preferences.putString("playerName", name);
-    preferences.flush();
+    try {
+      preferences.flush();
+    } catch (Exception e) { // this catch is here to workaround issue with incognito mode which appears in some cases
+      Gdx.app.error(Game.class.getName(), e.getClass().getCanonicalName() + ": " + e.getMessage());
+    }
   }
 
   @Override

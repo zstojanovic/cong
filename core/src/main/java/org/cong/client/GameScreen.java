@@ -39,6 +39,7 @@ public class GameScreen extends ScreenAdapter {
   Label scoreLabel;
   Label recordLabel;
   Sound bounce, drop, collect;
+  boolean isShown;
 
   GameScreen(Game game) {
     this.game = game;
@@ -110,8 +111,9 @@ public class GameScreen extends ScreenAdapter {
     var multiplexer = new InputMultiplexer();
     multiplexer.addProcessor(new InputHandler());
     multiplexer.addProcessor(stage);
-
     Gdx.input.setInputProcessor(multiplexer);
+
+    isShown = true;
     game.connectionManager.send(new NewPlayerRequest(game.getPlayerName()));
   }
 
