@@ -208,7 +208,7 @@ public class GameServer extends ApplicationAdapter {
   }
 
   void disconnectPlayer(Player player) {
-    socketManager.broadcast(new ChatMessage(getTimestamp(), player.name + " left the game\n"));
+    handleMessage(new ChatMessage(getTimestamp(), player.name + " left the game\n"));
     player.dispose();
   }
 
