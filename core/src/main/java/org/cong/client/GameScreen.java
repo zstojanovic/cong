@@ -26,6 +26,8 @@ public class GameScreen extends ScreenAdapter {
   ShakeableCamera camera;
   FitViewport viewport;
   Texture background;
+  Image errorMessage;
+  boolean errorOccurred;
   Ball[] balls = new Ball[Const.MAX_BALLS];
   Player[] players = new Player[Const.MAX_PLAYERS];
   Paddle[] paddles = new Paddle[Const.MAX_PADDLES];
@@ -78,7 +80,7 @@ public class GameScreen extends ScreenAdapter {
     messageArea.setMaxLength(80);
     messageArea.setBlinkTime(1);
     messageArea.setTextFieldListener((field, c) -> {
-      if ((c == '\r' || c == '\n') && !field.getText().isEmpty()) {
+      if ((c == '\r' || c == '\n') && !field.getText().isEmpty() && !errorOccurred) {
         game.connectionManager.send(field.getText());
         field.setText("");
       }
@@ -101,11 +103,17 @@ public class GameScreen extends ScreenAdapter {
     recordLabel.setWidth(88);
     recordLabel.setPosition(896, 615);
 
+    errorMessage = new Image(new Texture("errormessage.png"));
+    errorMessage.setScale(0.5f);
+    errorMessage.setPosition(164, 8);
+    errorMessage.setVisible(errorOccurred);
+
     stage.addActor(panel);
     stage.addActor(scoreLabel);
     stage.addActor(recordLabel);
     stage.addActor(messageArea);
     stage.addActor(chatArea);
+    stage.addActor(errorMessage);
     stage.setKeyboardFocus(messageArea);
 
     var multiplexer = new InputMultiplexer();
@@ -252,5 +260,10 @@ public class GameScreen extends ScreenAdapter {
     for (ChatMessage message: response.messages) {
       receiveChatMessage(message);
     }
+  }
+
+  void onFatalError() {
+    errorOccurred = true;
+    if (errorMessage != null) errorMessage.setVisible(true);
   }
 }

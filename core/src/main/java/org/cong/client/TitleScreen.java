@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.utils.Align;
@@ -26,6 +27,8 @@ public class TitleScreen extends ScreenAdapter {
   String recordText;
   float position = 0;
   int direction = -1;
+  Image errorMessage;
+  boolean errorOccurred;
 
   public TitleScreen(Game game) {
     this.game = game;
@@ -54,7 +57,7 @@ public class TitleScreen extends ScreenAdapter {
     nameField.setCursorPosition(nameField.getText().length());
     nameField.setTextFieldFilter((textField, c) -> Character.isLetterOrDigit(c));
     nameField.setTextFieldListener((field, c) -> {
-      if ((c == '\r' || c == '\n') && field.getText().length() > 2) {
+      if ((c == '\r' || c == '\n') && field.getText().length() > 2 && game.connectionManager.socket.isOpen()) {
         game.savePlayerName(field.getText());
         game.setScreen(game.screen);
       }
@@ -63,14 +66,20 @@ public class TitleScreen extends ScreenAdapter {
     TextField.TextFieldStyle recordStyle = new TextField.TextFieldStyle(
       new BitmapFont(Gdx.files.internal("ui/nimbus-sans-l-bold-24.fnt")),
       new Color(0xe3c615ff), null, null, null);
-    recordLabel = new TextField(recordText, recordStyle);
+    recordLabel = new TextField("CONNECTING, PLEASE WAIT...", recordStyle);
     recordLabel.setAlignment(Align.center);
     recordLabel.setWidth(900);
     recordLabel.setPosition(195, 32);
     recordLabel.setDisabled(true);
 
+    errorMessage = new Image(new Texture("errormessage.png"));
+    errorMessage.setScale(0.5f);
+    errorMessage.setPosition(164, 8);
+    errorMessage.setVisible(errorOccurred);
+
     stage.addActor(recordLabel);
     stage.addActor(nameField);
+    stage.addActor(errorMessage);
     stage.setKeyboardFocus(nameField);
     Gdx.input.setInputProcessor(stage);
   }
@@ -102,6 +111,11 @@ public class TitleScreen extends ScreenAdapter {
     batch.draw(title, 0, 0, game.WIDTH, game.HEIGHT);
     batch.end();
     stage.draw();
+  }
+
+  void onFatalError() {
+    errorOccurred = true;
+    if (errorMessage != null) errorMessage.setVisible(true);
   }
 
   @Override

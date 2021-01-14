@@ -65,19 +65,22 @@ public class ServerConnectionManager extends WebSocketServer {
       logger.warn(socket.getRemoteSocketAddress() + " requesting connection but limit reached");
       socket.close();
     } else {
-      logger.info(socket.getRemoteSocketAddress() + " new connection");
+      logger.info(socket.getRemoteSocketAddress() + " new connection, socket " + socket);
     }
   }
 
   @Override
   public void onClose(WebSocket socket, int code, String reason, boolean remote) {
+    logger.info(socket + " closing with code: " + code + ", remote: " + remote + ", reason: " + reason);
+    disconnect(socket);
+  }
+
+  void disconnect(WebSocket socket) {
     var player = socketMap.get(socket);
     if (player != null) {
       logger.info(player + " disconnected");
       server.disconnectPlayer(player);
       socketMap.remove(socket);
-    } else {
-      logger.info(socket + " disconnected");
     }
   }
 
@@ -123,6 +126,7 @@ public class ServerConnectionManager extends WebSocketServer {
     writer.print(" error ");
     e.printStackTrace(writer);
     logger.error(stringWriter.toString());
+    disconnect(socket);
   }
 
   @Override

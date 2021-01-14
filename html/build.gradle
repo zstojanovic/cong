@@ -22,6 +22,7 @@ gwt {
 	project.webAppDirName = 'webapp'
 
 	compiler {
+		saveSource = true;
 		strict = true;
 		disableCastChecking = true;
 		sourceLevel = 11
