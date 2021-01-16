@@ -22,7 +22,7 @@
     window.onkeydown =
       function(event) {
         // prevent all navigation keys except the space key
-        if([33, 34, 35, 36, 37, 38, 39, 40].indexOf(event.keyCode) > -1) {
+        if([32, 33, 34, 35, 36, 37, 38, 39, 40].indexOf(event.keyCode) > -1) {
           event.preventDefault();
           return false;
         }

@@ -34,6 +34,7 @@ public class ServerConnectionManager extends WebSocketServer {
     this.server = server;
     handleSSL();
     setTcpNoDelay(true);
+    setConnectionLostTimeout(15);
     start();
   }
 
