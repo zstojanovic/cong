@@ -185,7 +185,6 @@ public class GameServer extends ApplicationAdapter {
     var player = Player.create(request.name, paddle);
     player.ifPresent(p -> {
       var names = Player.repo.stream().map(a -> a.name).toArray(String[]::new);
-      socketManager.broadcast(new PlayerNames(names));
       socketManager.send(socket, new NewPlayerResponse(p.id, chatQueue.toArray(ChatMessage[]::new)));
       handleMessage(new ChatMessage(getTimestamp(), p.name + " joined the game\n"));
     });
@@ -194,7 +193,7 @@ public class GameServer extends ApplicationAdapter {
 
   void handleMessage(Player player, String message) {
     logger.info("[Message] " + player.name + ": " + message.trim());
-    handleMessage(new ChatMessage(getTimestamp(), player.id, message));
+    handleMessage(new ChatMessage(getTimestamp(), player.name, message));
   }
 
   void handleMessage(ChatMessage chatMessage) {

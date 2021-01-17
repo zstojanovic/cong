@@ -29,7 +29,6 @@ public class GameScreen extends ScreenAdapter {
   Image errorMessage;
   boolean errorOccurred;
   Ball[] balls = new Ball[Const.MAX_BALLS];
-  Player[] players = new Player[Const.MAX_PLAYERS];
   Paddle[] paddles = new Paddle[Const.MAX_PADDLES];
   PowerUp[] powerUps = new PowerUp[Const.MAX_POWER_UPS];
   Texture[] paddleTextures = new Texture[Const.MAX_PADDLES];
@@ -237,26 +236,13 @@ public class GameScreen extends ScreenAdapter {
     if (message.isServerMessage()) {
       m = "[" + message.timestamp + "] >>> " + message.text;
     } else {
-      m = "(" + message.timestamp + ") " + players[message.playerId].name + ":\n" + message.text;
+      m = "(" + message.timestamp + ") " + message.playerName + ":\n" + message.text;
     }
     var lines = (chatText + m).split("\\r?\\n");
     var newText = new StringBuilder();
     var skipCount = Math.max(0, lines.length - (Const.MESSAGE_LIMIT * 2));
     Arrays.stream(lines).skip(skipCount).forEach(s -> newText.append(s).append("\n"));
     chatText = newText.toString();
-  }
-
-  void handlePlayerNames(PlayerNames playerNames) {
-    for (byte i = 0; i < Const.MAX_PLAYERS; i++) {
-      var name = playerNames.names[i];
-      if (name != null) {
-        if (players[i] == null) {
-          players[i] = new Player(i, name);
-        } else {
-          players[i].name = name;
-        }
-      }
-    }
   }
 
   void handleNewPlayerResponse(NewPlayerResponse response) {

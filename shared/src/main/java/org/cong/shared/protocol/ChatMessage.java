@@ -7,38 +7,37 @@ import com.github.czyzby.websocket.serialization.impl.Serializer;
 
 public class ChatMessage implements Transferable<ChatMessage> {
   static final ChatMessage EXAMPLE = new ChatMessage();
-  static final byte SERVER = -1;
   public String timestamp;
-  public byte playerId;
+  public String playerName;
   public String text;
 
   ChatMessage() {
   }
 
-  public ChatMessage(String timestamp, byte playerId, String text) {
+  public ChatMessage(String timestamp, String playerName, String text) {
     this.timestamp = timestamp;
-    this.playerId = playerId;
+    this.playerName = playerName;
     this.text = text;
   }
 
   public ChatMessage(String timestamp, String text) {
-    this(timestamp, SERVER, text);
+    this(timestamp, null, text);
   }
 
   public boolean isServerMessage() {
-    return playerId == SERVER;
+    return playerName == null;
   }
   
   @Override
   public void serialize(Serializer serializer) throws SerializationException {
-    serializer.serializeString(timestamp).serializeByte(playerId).serializeString(text);
+    serializer.serializeString(timestamp).serializeString(playerName).serializeString(text);
   }
 
   @Override
   public ChatMessage deserialize(Deserializer deserializer) throws SerializationException {
     return new ChatMessage(
       deserializer.deserializeString(),
-      deserializer.deserializeByte(),
+      deserializer.deserializeString(),
       deserializer.deserializeString());
   }
 }
