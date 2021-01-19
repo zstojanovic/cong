@@ -89,7 +89,13 @@ public class ServerConnectionManager extends WebSocketServer {
   public void onMessage(WebSocket socket, String message) {
     var player = socketMap.get(socket);
     if (player != null) {
-      server.handleMessage(player, message);
+      var trimmed = message.trim();
+      server.handleMessage(player, trimmed);
+      if (trimmed.equals("/addbot")) {
+        server.handleAddBot();
+      } else if (trimmed.equals("/removebot")) {
+        server.handleRemoveBot();
+      }
     } else {
       logger.error("Unknown socket (" + socket + ") sent message: " + message);
     }
@@ -102,13 +108,9 @@ public class ServerConnectionManager extends WebSocketServer {
     if (object instanceof RecordStatsRequest) {
       server.handleRecordStatsRequest(socket);
     } else if (object instanceof NewPlayerRequest) {
-      var newPlayer = server.createNewPlayer((NewPlayerRequest)object, socket);
-      if (newPlayer.isPresent()) {
-        socketMap.put(socket, newPlayer.get());
-        logger.info(newPlayer.get() + " created");
-      } else {
-        logger.error("Too many players");
-      }
+      server
+        .createNewPlayer((NewPlayerRequest)object, socket)
+        .ifPresent(newPlayer -> socketMap.put(socket, newPlayer));
     } else if (player == null) {
       logger.error(socket.getRemoteSocketAddress() +
         " received object from connection without Player" + object.getClass().getCanonicalName());

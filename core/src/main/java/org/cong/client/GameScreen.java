@@ -80,7 +80,7 @@ public class GameScreen extends ScreenAdapter {
     messageArea.setBlinkTime(1);
     messageArea.setTextFieldListener((field, c) -> {
       if ((c == '\r' || c == '\n') && !field.getText().isEmpty() && !errorOccurred) {
-        game.connectionManager.send(field.getText());
+        game.connectionManager.send(field.getText().trim());
         field.setText("");
       }
     });

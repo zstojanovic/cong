@@ -58,7 +58,7 @@ public class TitleScreen extends ScreenAdapter {
     nameField.setTextFieldFilter((textField, c) -> Character.isLetterOrDigit(c));
     nameField.setTextFieldListener((field, c) -> {
       if ((c == '\r' || c == '\n') && field.getText().length() > 2 && game.connectionManager.socket.isOpen()) {
-        game.savePlayerName(field.getText());
+        game.savePlayerName(field.getText().trim());
         game.setScreen(game.screen);
       }
     });

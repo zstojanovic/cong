@@ -9,15 +9,21 @@ public class Player extends Identifiable {
 
   String name;
   Optional<Paddle> paddle;
+  Optional<Bot> bot;
 
-  private Player(byte id, String name, Optional<Paddle> paddle) {
+  private Player(byte id, String name, Optional<Paddle> paddle, Optional<Bot> bot) {
     super(id);
     this.name = name;
     this.paddle = paddle;
+    this.bot = bot;
   }
 
-  static Optional<Player> create(String name, Optional<Paddle> paddle) {
-    return repo.create(id -> new Player(id, name, paddle));
+  static Optional<Player> create(String name, Optional<Paddle> paddle, Optional<Bot> bot) {
+    return repo.create(id -> new Player(id, name, paddle, bot));
+  }
+
+  void step(float delta) {
+    bot.flatMap(bot -> bot.think(delta)).ifPresent(event -> paddle.ifPresent(p -> p.handleKeyEvent(event)));
   }
 
   @Override

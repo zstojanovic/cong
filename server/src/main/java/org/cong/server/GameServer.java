@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class GameServer extends ApplicationAdapter {
@@ -38,12 +39,13 @@ public class GameServer extends ApplicationAdapter {
   boolean drop;
   boolean collect;
 
-  Runnable[] powerUpRunnables = new Runnable[] {
+  Runnable[] powerUpCreators = new Runnable[] {
     () -> BallFreeze.create(world),
     () -> ExtraBall.create(world),
     () -> PaddleSlowdown.create(world),
     () -> PaddleGrowth.create(world)
   };
+  Supplier<Bot>[] botSuppliers = new Supplier[] {TrivialBot::new, DumbBot::new};
 
   @Override
   public void create() {
@@ -80,6 +82,7 @@ public class GameServer extends ApplicationAdapter {
   public void render() {
     var delta = Gdx.graphics.getDeltaTime();
     world.step(delta, 6, 2);
+    Player.repo.stream().forEach(p -> p.step(delta));
     Paddle.repo.stream().forEach(p -> p.step(delta));
     handleBalls(delta);
     handlePowerUps(delta);
@@ -108,7 +111,7 @@ public class GameServer extends ApplicationAdapter {
 
   void handlePowerUps(float delta) {
     if (bounceCount >= 2 && status == Status.PLAY) {
-      powerUpRunnables[MathUtils.random(powerUpRunnables.length - 1)].run();
+      powerUpCreators[MathUtils.random(powerUpCreators.length - 1)].run();
       bounceCount = 0;
     }
     PowerUp.repo.stream().forEach(p -> p.step(delta));
@@ -118,15 +121,17 @@ public class GameServer extends ApplicationAdapter {
     status = Status.COUNTDOWN;
     countdownTimer = 3;
     if (playTimer > recordTime) {
-      recordTime = playTimer;
-      recordNames = Player.repo.stream().map(a -> a.name).toArray(String[]::new);
-      preferences.putFloat("record.time", recordTime);
-      preferences.putString("record.names", String.join(",", recordNames));
-      preferences.flush();
-      getRecordText(false).ifPresent(text -> {
-        logger.info(text);
-        handleMessage(new ChatMessage(getTimestamp(), text));
-      });
+      var botsPresent = Player.repo.stream().anyMatch(p -> p.bot.isPresent());
+      if (botsPresent) {
+        sendServerMessage((int)playTimer + "s without accident with bot help wont be recorded");
+      } else {
+        recordTime = playTimer;
+        recordNames = Player.repo.stream().filter(p -> p.paddle.isPresent()).map(a -> a.name).toArray(String[]::new);
+        preferences.putFloat("record.time", recordTime);
+        preferences.putString("record.names", String.join(",", recordNames));
+        preferences.flush();
+        getRecordText(false).ifPresent(this::sendServerMessage);
+      }
     }
     PowerUp.repo.stream().forEach(PowerUp::dispose);
     Ball.repo.first().startCountdown();
@@ -180,23 +185,32 @@ public class GameServer extends ApplicationAdapter {
   }
 
   Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {
+    if (Paddle.repo.count() == Const.MAX_PADDLES) handleRemoveBot(); // if no free paddles, try to remove a bot
     var paddle = Paddle.create(world);
     if (paddle.isEmpty()) logger.warn("All paddles occupied");
-    var player = Player.create(request.name, paddle);
-    player.ifPresent(p -> {
+    var player = Player.create(request.name, paddle, Optional.empty());
+    if (player.isPresent()) {
       var names = Player.repo.stream().map(a -> a.name).toArray(String[]::new);
-      socketManager.send(socket, new NewPlayerResponse(p.id, chatQueue.toArray(ChatMessage[]::new)));
-      handleMessage(new ChatMessage(getTimestamp(), p.name + " joined the game\n"));
-    });
+      socketManager.send(socket, new NewPlayerResponse(player.get().id, chatQueue.toArray(ChatMessage[]::new)));
+      logger.info(player.get() + " created");
+      sendServerMessage(player.get().name + (paddle.isPresent() ? " joined the game" : " joined chat only"));
+    } else {
+      logger.error("Too many players");
+    }
     return player;
   }
 
+  void sendServerMessage(String text) {
+    handleMessage(new ChatMessage(getTimestamp(), text));
+  }
+
   void handleMessage(Player player, String message) {
-    logger.info("[Message] " + player.name + ": " + message.trim());
     handleMessage(new ChatMessage(getTimestamp(), player.name, message));
   }
 
   void handleMessage(ChatMessage chatMessage) {
+    var name = chatMessage.playerName == null ? "[SERVER]" : chatMessage.playerName;
+    logger.info("[Message] " + name + ": " + chatMessage.text);
     chatQueue.add(chatMessage);
     if (chatQueue.size() > Const.MESSAGE_LIMIT) chatQueue.remove();
     socketManager.broadcast(chatMessage);
@@ -207,13 +221,39 @@ public class GameServer extends ApplicationAdapter {
   }
 
   void disconnectPlayer(Player player) {
-    handleMessage(new ChatMessage(getTimestamp(), player.name + " left the game\n"));
+    sendServerMessage(player.name + " left the game");
     player.dispose();
   }
 
   void handleKeyEvent(Player player, KeyEvent event) {
     if (player.paddle.isEmpty()) logger.warn("Player without paddle sent KeyEvent");
     player.paddle.ifPresent(p -> p.handleKeyEvent(event));
+  }
+
+  void handleAddBot() {
+    var paddle = Paddle.create(world);
+    if (paddle.isEmpty()) {
+      sendServerMessage("Can't create bot, all paddles occupied");
+    } else {
+      var bot = botSuppliers[MathUtils.random(1)].get();
+      var player = Player.create(bot.name, paddle, Optional.of(bot));
+      if (player.isEmpty()) {
+        logger.error("Too many players"); // This should never happen since we got the paddle and player limit is higher
+      } else {
+        logger.info("Bot " + player.get() + " created");
+        sendServerMessage(bot.name + " joined the game");
+      }
+    }
+  }
+
+  void handleRemoveBot() {
+    Player.repo.stream()
+      .filter(p -> p.bot.isPresent())
+      .findFirst()
+      .ifPresent(p -> {
+        logger.info("Bot" + p + " removed");
+        disconnectPlayer(p);
+      });
   }
 
   public static void main(String[] args) {
