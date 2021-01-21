@@ -9,12 +9,13 @@ import java.util.Optional;
 
 public abstract class PowerUp extends GameElement {
   static Repository<PowerUp> repo = new Repository<>(new PowerUp[Const.MAX_POWER_UPS]);
-  static short COLLISION_CODE = 4;
 
-  Optional<Paddle> paddle = Optional.empty();
-  protected PowerUpState.Type type;
-  float diameter = 0.25f;
-  float velocity = 1.5f;
+  static final short COLLISION_CODE = 4;
+  static final float DIAMETER = 0.25f;
+  static final float VELOCITY = 1.5f;
+
+  protected final PowerUpState.Type type;
+  protected Optional<Paddle> paddle = Optional.empty();
 
   protected PowerUp(byte id, World world, PowerUpState.Type type) {
     super(id, world);
@@ -22,7 +23,7 @@ public abstract class PowerUp extends GameElement {
     body = createBody();
     var direction = MathUtils.random() * MathUtils.PI2;
     body.setTransform(Const.WIDTH/2, Const.HEIGHT/2, 0);
-    body.setLinearVelocity(MathUtils.cos(direction) * velocity, MathUtils.sin(direction) * velocity);
+    body.setLinearVelocity(MathUtils.cos(direction) * VELOCITY, MathUtils.sin(direction) * VELOCITY);
   }
 
   PowerUpState getState() {
@@ -34,7 +35,7 @@ public abstract class PowerUp extends GameElement {
     bodyDef.type = BodyDef.BodyType.DynamicBody;
     var body = world.createBody(bodyDef);
     var shape = new CircleShape();
-    shape.setRadius(diameter/2);
+    shape.setRadius(DIAMETER / 2);
     var fixtureDef = new FixtureDef();
     fixtureDef.shape = shape;
     fixtureDef.friction = 0;
@@ -50,8 +51,8 @@ public abstract class PowerUp extends GameElement {
 
   boolean dropped() {
     return
-      (body.getPosition().x < -diameter || body.getPosition().x > (Const.WIDTH + diameter) ||
-      body.getPosition().y < -diameter || body.getPosition().y > (Const.HEIGHT + diameter));
+      (body.getPosition().x < -DIAMETER || body.getPosition().x > (Const.WIDTH + DIAMETER) ||
+      body.getPosition().y < -DIAMETER || body.getPosition().y > (Const.HEIGHT + DIAMETER));
   }
 
   void collect(Paddle paddle) {
@@ -74,6 +75,7 @@ public abstract class PowerUp extends GameElement {
   void dispose() {
     if (body != null) world.destroyBody(body);
     repo.remove(this);
+    body = null;
   }
 }
 

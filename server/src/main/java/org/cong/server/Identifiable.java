@@ -1,7 +1,7 @@
 package org.cong.server;
 
 public abstract class Identifiable {
-  byte id;
+  protected byte id;
 
   Identifiable(byte id) {
     this.id = id;

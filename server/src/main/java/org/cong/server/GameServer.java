@@ -121,12 +121,12 @@ public class GameServer extends ApplicationAdapter {
     status = Status.COUNTDOWN;
     countdownTimer = 3;
     if (playTimer > recordTime) {
-      var botsPresent = Player.repo.stream().anyMatch(p -> p.bot.isPresent());
+      var botsPresent = Player.repo.stream().anyMatch(p -> p.bot().isPresent());
       if (botsPresent) {
         sendServerMessage((int)playTimer + "s without accident with bot help wont be recorded");
       } else {
         recordTime = playTimer;
-        recordNames = Player.repo.stream().filter(p -> p.paddle.isPresent()).map(a -> a.name).toArray(String[]::new);
+        recordNames = Player.repo.stream().filter(p -> p.paddle().isPresent()).map(a -> a.name).toArray(String[]::new);
         preferences.putFloat("record.time", recordTime);
         preferences.putString("record.names", String.join(",", recordNames));
         preferences.flush();
@@ -226,8 +226,8 @@ public class GameServer extends ApplicationAdapter {
   }
 
   void handleKeyEvent(Player player, KeyEvent event) {
-    if (player.paddle.isEmpty()) logger.warn("Player without paddle sent KeyEvent");
-    player.paddle.ifPresent(p -> p.handleKeyEvent(event));
+    if (player.paddle().isEmpty()) logger.warn("Player without paddle sent KeyEvent");
+    player.paddle().ifPresent(p -> p.handleKeyEvent(event));
   }
 
   void handleAddBot() {
@@ -235,7 +235,8 @@ public class GameServer extends ApplicationAdapter {
     if (paddle.isEmpty()) {
       sendServerMessage("Can't create bot, all paddles occupied");
     } else {
-      var bot = botSuppliers[MathUtils.random(1)].get();
+      var bot = botSuppliers[MathUtils.random(botSuppliers.length - 1)].get();
+      bot.setup(paddle.get());
       var player = Player.create(bot.name, paddle, Optional.of(bot));
       if (player.isEmpty()) {
         logger.error("Too many players"); // This should never happen since we got the paddle and player limit is higher
@@ -248,7 +249,7 @@ public class GameServer extends ApplicationAdapter {
 
   void handleRemoveBot() {
     Player.repo.stream()
-      .filter(p -> p.bot.isPresent())
+      .filter(p -> p.bot().isPresent())
       .findFirst()
       .ifPresent(p -> {
         logger.info("Bot" + p + " removed");

@@ -6,12 +6,18 @@ import org.cong.shared.protocol.KeyEvent;
 import java.util.Optional;
 
 public abstract class Bot {
-  String name;
+  protected String name;
+  protected Paddle paddle;
+
+  void setup(Paddle paddle) {
+    this.paddle = paddle;
+  }
+
   abstract Optional<KeyEvent> think(float delta);
 }
 
 class TrivialBot extends Bot {
-  boolean started;
+  private boolean started;
 
   TrivialBot() {
     name = "TrivialBot_" + MathUtils.random(999);
@@ -32,7 +38,7 @@ class TrivialBot extends Bot {
 }
 
 class DumbBot extends Bot {
-  Optional<KeyEvent.Code>[] codes = new Optional[] {
+  private static final Optional<KeyEvent.Code>[] CODES = new Optional[] {
     Optional.of(KeyEvent.Code.LEFT_PRESSED),
     Optional.of(KeyEvent.Code.LEFT_RELEASED),
     Optional.of(KeyEvent.Code.RIGHT_PRESSED),
@@ -47,7 +53,7 @@ class DumbBot extends Bot {
   @Override
   public Optional<KeyEvent> think(float delta) {
     if (MathUtils.random() < 0.01) {
-      return codes[MathUtils.random(4)].map(KeyEvent::new);
+      return CODES[MathUtils.random(4)].map(KeyEvent::new);
     }
     return Optional.empty();
   }

@@ -7,9 +7,9 @@ import java.util.Optional;
 public class Player extends Identifiable {
   static Repository<Player> repo = new Repository<>(new Player[Const.MAX_PLAYERS]);
 
-  String name;
-  Optional<Paddle> paddle;
-  Optional<Bot> bot;
+  final String name;
+  private Optional<Paddle> paddle;
+  private Optional<Bot> bot;
 
   private Player(byte id, String name, Optional<Paddle> paddle, Optional<Bot> bot) {
     super(id);
@@ -24,6 +24,14 @@ public class Player extends Identifiable {
 
   void step(float delta) {
     bot.flatMap(bot -> bot.think(delta)).ifPresent(event -> paddle.ifPresent(p -> p.handleKeyEvent(event)));
+  }
+
+  Optional<Paddle> paddle() {
+    return paddle;
+  }
+
+  Optional<Bot> bot() {
+    return bot;
   }
 
   @Override

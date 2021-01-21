@@ -10,16 +10,17 @@ import java.util.Optional;
 
 public class Paddle extends GameElement {
   static Repository<Paddle> repo = new Repository<>(new Paddle[Const.MAX_PADDLES]);
-  static short COLLISION_CODE = 2;
 
-  float location;
-  float maxSpeed = 5;
-  float width = 1;
-  float height = 0.3f;
-  float currentSpeed = 0;
-  float speedFactor = 1;
-  float slowdownTimer;
-  float sizeIncreaseTimer;
+  static final short COLLISION_CODE = 2;
+  static final float MAX_VELOCITY = 5;
+  static final float WIDTH = 1;
+  static final float HEIGHT = 0.3f;
+
+  private float location;
+  private float currentVelocity = 0;
+  private float speedFactor = 1;
+  private float slowdownTimer;
+  private float sizeIncreaseTimer;
 
   private Paddle(byte id, World world) {
     super(id, world);
@@ -41,13 +42,13 @@ public class Paddle extends GameElement {
     bodyDef.type = BodyDef.BodyType.KinematicBody;
     var body = world.createBody(bodyDef);
     body.setUserData(this);
-    setShape(body, width);
+    setShape(body, WIDTH);
     return body;
   }
 
   private void setShape(Body body, float width) {
     var shape = new PolygonShape();
-    shape.set(new float[]{-width/2,-height/2, -width/2,height/2, width/2,height/2, width/2,-height/2});
+    shape.set(new float[]{-width/2,-HEIGHT/2, -width/2,HEIGHT/2, width/2,HEIGHT/2, width/2,-HEIGHT/2});
     var fixtureDef = new FixtureDef();
     fixtureDef.shape = shape;
     fixtureDef.filter.categoryBits = COLLISION_CODE;
@@ -56,7 +57,7 @@ public class Paddle extends GameElement {
   }
 
   void step(float delta) {
-    location = location + (currentSpeed * speedFactor * delta);
+    location = location + (currentVelocity * speedFactor * delta);
     updateBodyTransform();
     if (slowdownTimer > 0) {
       slowdownTimer -= delta;
@@ -68,7 +69,7 @@ public class Paddle extends GameElement {
       sizeIncreaseTimer -= delta;
       if (sizeIncreaseTimer <= 0) {
         body.getFixtureList().forEach(f -> body.destroyFixture(f));
-        setShape(body, width);
+        setShape(body, WIDTH);
       }
     }
   }
@@ -81,7 +82,7 @@ public class Paddle extends GameElement {
   void increaseSize() {
     sizeIncreaseTimer = 15f;
     body.getFixtureList().forEach(f -> body.destroyFixture(f));
-    setShape(body, width * 1.5f);
+    setShape(body, WIDTH * 1.5f);
   }
 
   private void updateBodyTransform() {
@@ -101,16 +102,16 @@ public class Paddle extends GameElement {
   void handleKeyEvent(KeyEvent keyEvent) {
     switch (keyEvent.code) {
       case LEFT_PRESSED:
-        if (currentSpeed == 0) currentSpeed = maxSpeed; else currentSpeed = 0;
+        if (currentVelocity == 0) currentVelocity = MAX_VELOCITY; else currentVelocity = 0;
         break;
       case RIGHT_PRESSED:
-        if (currentSpeed == 0) currentSpeed = -maxSpeed; else currentSpeed = 0;
+        if (currentVelocity == 0) currentVelocity = -MAX_VELOCITY; else currentVelocity = 0;
         break;
       case LEFT_RELEASED:
-        if (currentSpeed == 0) currentSpeed = -maxSpeed; else currentSpeed = 0;
+        if (currentVelocity == 0) currentVelocity = -MAX_VELOCITY; else currentVelocity = 0;
         break;
       case RIGHT_RELEASED:
-        if (currentSpeed == 0) currentSpeed = maxSpeed; else currentSpeed = 0;
+        if (currentVelocity == 0) currentVelocity = MAX_VELOCITY; else currentVelocity = 0;
         break;
     }
   }
@@ -118,5 +119,6 @@ public class Paddle extends GameElement {
   void dispose() {
     world.destroyBody(body);
     repo.remove(this);
+    body = null;
   }
 }

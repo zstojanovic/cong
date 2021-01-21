@@ -10,11 +10,12 @@ import java.util.Optional;
 
 public class Ball extends GameElement {
   static Repository<Ball> repo = new Repository<>(new Ball[Const.MAX_BALLS]);
-  static short COLLISION_CODE = 1;
 
-  float diameter = 0.5f;
-  float velocity = 2.5f;
-  float freezeTimer;
+  static final short COLLISION_CODE = 1;
+  static final float DIAMETER = 0.5f;
+  static final float VELOCITY = 2.5f;
+
+  private float freezeTimer;
 
   private Ball(byte id, World world) {
     super(id, world);
@@ -40,7 +41,7 @@ public class Ball extends GameElement {
   }
 
   void startPlaying(float direction) {
-    body.setLinearVelocity(MathUtils.cos(direction) * velocity, MathUtils.sin(direction) * velocity);
+    body.setLinearVelocity(MathUtils.cos(direction) * VELOCITY, MathUtils.sin(direction) * VELOCITY);
   }
 
   private Body createBody() {
@@ -48,7 +49,7 @@ public class Ball extends GameElement {
     bodyDef.type = BodyDef.BodyType.DynamicBody;
     var body = world.createBody(bodyDef);
     var shape = new CircleShape();
-    shape.setRadius(diameter/2);
+    shape.setRadius(DIAMETER / 2);
     var fixtureDef = new FixtureDef();
     fixtureDef.shape = shape;
     fixtureDef.friction = 0;
@@ -64,14 +65,14 @@ public class Ball extends GameElement {
 
   boolean dropped() {
     return
-      body.getPosition().x < -diameter || body.getPosition().x > (Const.WIDTH + diameter) ||
-      body.getPosition().y < -diameter || body.getPosition().y > (Const.HEIGHT + diameter);
+      body.getPosition().x < -DIAMETER || body.getPosition().x > (Const.WIDTH + DIAMETER) ||
+      body.getPosition().y < -DIAMETER || body.getPosition().y > (Const.HEIGHT + DIAMETER);
   }
 
   void step(float delta) {
-    var diff = Math.abs(body.getLinearVelocity().len() - velocity);
+    var diff = Math.abs(body.getLinearVelocity().len() - VELOCITY);
     if (diff > 0.05f) {
-      body.setLinearVelocity(body.getLinearVelocity().setLength(velocity));
+      body.setLinearVelocity(body.getLinearVelocity().setLength(VELOCITY));
     }
     if (freezeTimer > 0) {
       freezeTimer -= delta;
@@ -89,5 +90,6 @@ public class Ball extends GameElement {
   void dispose() {
     world.destroyBody(body);
     repo.remove(this);
+    body = null;
   }
 }
