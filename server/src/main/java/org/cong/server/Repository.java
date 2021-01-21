@@ -29,23 +29,23 @@ public class Repository<Type extends Identifiable> {
     elements[element.id] = null;
   }
 
-  Stream<Type> stream() {
+  public Stream<Type> stream() {
     return Arrays.stream(elements).filter(Objects::nonNull);
   }
 
-  List<Type> list() {
+  public List<Type> list() {
     return stream().collect(Collectors.toList());
   }
 
-  Type first() {
+  public Type first() {
     return stream().findFirst().get();
   }
 
-  long count() {
+  public long count() {
     return stream().count();
   }
 
-  Optional<Type> random() {
+  public Optional<Type> random() {
     var list = list();
     if (list.isEmpty()) return Optional.empty();
     return Optional.of(list.get(MathUtils.random(list.size() - 1)));

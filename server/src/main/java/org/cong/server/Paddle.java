@@ -12,7 +12,7 @@ public class Paddle extends GameElement {
   static Repository<Paddle> repo = new Repository<>(new Paddle[Const.MAX_PADDLES]);
 
   static final short COLLISION_CODE = 2;
-  static final float MAX_VELOCITY = 5;
+  public static final float MAX_VELOCITY = 5;
   static final float WIDTH = 1;
   static final float HEIGHT = 0.3f;
 
@@ -102,18 +102,34 @@ public class Paddle extends GameElement {
   void handleKeyEvent(KeyEvent keyEvent) {
     switch (keyEvent.code) {
       case LEFT_PRESSED:
-        if (currentVelocity == 0) currentVelocity = MAX_VELOCITY; else currentVelocity = 0;
+        if (currentVelocity == 0) goLeft(); else stop();
         break;
       case RIGHT_PRESSED:
-        if (currentVelocity == 0) currentVelocity = -MAX_VELOCITY; else currentVelocity = 0;
+        if (currentVelocity == 0) goRight(); else stop();
         break;
       case LEFT_RELEASED:
-        if (currentVelocity == 0) currentVelocity = -MAX_VELOCITY; else currentVelocity = 0;
+        if (currentVelocity == 0) goRight(); else stop();
         break;
       case RIGHT_RELEASED:
-        if (currentVelocity == 0) currentVelocity = MAX_VELOCITY; else currentVelocity = 0;
+        if (currentVelocity == 0) goLeft(); else stop();
         break;
     }
+  }
+
+  public void goLeft() {
+    currentVelocity = MAX_VELOCITY;
+  }
+
+  public void goRight() {
+    currentVelocity = -MAX_VELOCITY;
+  }
+
+  public void stop() {
+    currentVelocity = 0;
+  }
+
+  public float location() {
+    return location;
   }
 
   void dispose() {

@@ -1,5 +1,6 @@
 package org.cong.server;
 
+import org.cong.server.bot.Bot;
 import org.cong.shared.Const;
 
 import java.util.Optional;
@@ -23,7 +24,7 @@ public class Player extends Identifiable {
   }
 
   void step(float delta) {
-    bot.flatMap(bot -> bot.think(delta)).ifPresent(event -> paddle.ifPresent(p -> p.handleKeyEvent(event)));
+    bot.ifPresent(b -> b.think(delta));
   }
 
   Optional<Paddle> paddle() {

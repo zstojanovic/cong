@@ -8,6 +8,10 @@ import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import org.cong.server.bot.BetterBot;
+import org.cong.server.bot.Bot;
+import org.cong.server.bot.DumbBot;
+import org.cong.server.bot.TrivialBot;
 import org.cong.shared.*;
 import org.cong.shared.protocol.*;
 import org.java_websocket.WebSocket;
@@ -45,7 +49,7 @@ public class GameServer extends ApplicationAdapter {
     () -> PaddleSlowdown.create(world),
     () -> PaddleGrowth.create(world)
   };
-  Supplier<Bot>[] botSuppliers = new Supplier[] {TrivialBot::new, DumbBot::new};
+  Supplier<Bot>[] botSuppliers = new Supplier[] {TrivialBot::new, DumbBot::new, BetterBot::new};
 
   @Override
   public void create() {
@@ -237,12 +241,12 @@ public class GameServer extends ApplicationAdapter {
     } else {
       var bot = botSuppliers[MathUtils.random(botSuppliers.length - 1)].get();
       bot.setup(paddle.get());
-      var player = Player.create(bot.name, paddle, Optional.of(bot));
+      var player = Player.create(bot.name(), paddle, Optional.of(bot));
       if (player.isEmpty()) {
         logger.error("Too many players"); // This should never happen since we got the paddle and player limit is higher
       } else {
         logger.info("Bot " + player.get() + " created");
-        sendServerMessage(bot.name + " joined the game");
+        sendServerMessage(bot.name() + " joined the game");
       }
     }
   }

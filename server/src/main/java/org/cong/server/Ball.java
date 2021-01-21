@@ -9,7 +9,7 @@ import org.cong.shared.protocol.BallState;
 import java.util.Optional;
 
 public class Ball extends GameElement {
-  static Repository<Ball> repo = new Repository<>(new Ball[Const.MAX_BALLS]);
+  public static Repository<Ball> repo = new Repository<>(new Ball[Const.MAX_BALLS]);
 
   static final short COLLISION_CODE = 1;
   static final float DIAMETER = 0.5f;
