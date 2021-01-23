@@ -95,6 +95,10 @@ public class ServerConnectionManager extends WebSocketServer {
         server.handleAddBot(trimmed.substring(7));
       } else if (trimmed.equals("/removebots")) {
         server.handleRemoveBots(Const.MAX_PLAYERS);
+      } else if (trimmed.equals("/droppaddle")) {
+        server.handleDropPaddle(player);
+      } else if (trimmed.equals("/takepaddle")) {
+        server.handleTakePaddle(player);
       }
     } else {
       logger.error("Unknown socket (" + socket + ") sent message: " + message);

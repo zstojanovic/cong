@@ -27,6 +27,20 @@ public class Player extends Identifiable {
     bot.ifPresent(b -> b.think(delta));
   }
 
+  void setPaddle(Optional<Paddle> paddle) {
+    this.paddle = paddle;
+  }
+
+  boolean dropPaddle() {
+    if (paddle.isPresent()) {
+      paddle.get().dispose();
+      paddle = Optional.empty();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   Optional<Paddle> paddle() {
     return paddle;
   }
@@ -41,7 +55,7 @@ public class Player extends Identifiable {
   }
 
   void dispose() {
-    paddle.ifPresent(Paddle::dispose);
+    dropPaddle();
     repo.remove(this);
   }
 }

@@ -231,7 +231,7 @@ public class GameServer extends ApplicationAdapter {
   }
 
   void handleKeyEvent(Player player, KeyEvent event) {
-    if (player.paddle().isEmpty()) logger.warn("Player without paddle sent KeyEvent");
+    // TODO key events will unnecessarily arrive even if the player has no paddle
     player.paddle().ifPresent(p -> p.handleKeyEvent(event));
   }
 
@@ -269,6 +269,25 @@ public class GameServer extends ApplicationAdapter {
         logger.info("Bot" + p + " removed");
         disconnectPlayer(p);
       });
+  }
+
+  void handleDropPaddle(Player player) {
+    if (player.dropPaddle()) {
+      sendServerMessage(player.name + " dropped the paddle");
+    }
+  }
+
+  void handleTakePaddle(Player player) {
+    if (player.paddle().isEmpty()) {
+      if (Paddle.repo.count() == Const.MAX_PADDLES) handleRemoveBots(1); // if no free paddles, try to remove one bot
+      var paddle = Paddle.create(world);
+      if (paddle.isEmpty()) {
+        logger.warn("All paddles occupied");
+      } else {
+        player.setPaddle(paddle);
+        sendServerMessage(player.name + " took a paddle");
+      }
+    }
   }
 
   public static void main(String[] args) {
