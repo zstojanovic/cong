@@ -83,7 +83,7 @@ public class Ball extends GameElement {
   }
 
   void freeze() {
-    freezeTimer = 5f;
+    freezeTimer = 3f;
     body.setActive(false);
   }
 
