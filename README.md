@@ -1,8 +1,14 @@
-# Cong - a cooperative pong
+# Cong - a cooperative Pong
 
 An experimental not so massively multiplayer online cooperative arcade game and/or chat app.
 
 ![](https://img.itch.zone/aW1hZ2UvODc0MzU2LzQ5MjAzOTMucG5n/original/eWTIgS.png)
+
+### Features
+
+- up to nine paddles/players in the game
+- various power-ups
+- bot players
 
 ### Credits
 
