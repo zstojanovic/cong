@@ -2,10 +2,10 @@ package org.cong.server.bot;
 
 import com.badlogic.gdx.math.MathUtils;
 
-public class DumbBot extends Bot {
+public class RandoBot extends Bot {
 
-  public DumbBot() {
-    name = "DumbBot_" + MathUtils.random(999);
+  public RandoBot() {
+    name = "Rando_" + MathUtils.random(999);
   }
 
   @Override

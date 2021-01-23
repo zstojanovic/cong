@@ -91,10 +91,10 @@ public class ServerConnectionManager extends WebSocketServer {
     if (player != null) {
       var trimmed = message.trim();
       server.handleMessage(player, trimmed);
-      if (trimmed.equals("/addbot")) {
-        server.handleAddBot();
-      } else if (trimmed.equals("/removebot")) {
-        server.handleRemoveBot();
+      if (trimmed.startsWith("/addbot")) {
+        server.handleAddBot(trimmed.substring(7));
+      } else if (trimmed.equals("/removebots")) {
+        server.handleRemoveBots(Const.MAX_PLAYERS);
       }
     } else {
       logger.error("Unknown socket (" + socket + ") sent message: " + message);

@@ -3,10 +3,10 @@ package org.cong.server.bot;
 import com.badlogic.gdx.math.MathUtils;
 import org.cong.server.Paddle;
 
-public class TrivialBot extends Bot {
+public class ZippyBot extends Bot {
 
-  public TrivialBot() {
-    name = "TrivialBot_" + MathUtils.random(999);
+  public ZippyBot() {
+    name = "Zippy_" + MathUtils.random(999);
   }
 
   @Override

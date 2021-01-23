@@ -4,13 +4,13 @@ import com.badlogic.gdx.math.MathUtils;
 import org.cong.server.Ball;
 import org.cong.shared.Const;
 
-public class BetterBot extends Bot {
+public class IffyBot extends Bot {
   private static int nextId = 0;
-  private int id;
+  private final int id;
   private Ball ball;
 
-  public BetterBot() {
-    name = "BetterBot_" + MathUtils.random(999);
+  public IffyBot() {
+    name = "Iffy_" + MathUtils.random(999);
     id = nextId;
     nextId++;
   }

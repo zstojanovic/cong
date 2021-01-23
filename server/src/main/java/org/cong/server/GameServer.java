@@ -8,10 +8,10 @@ import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
-import org.cong.server.bot.BetterBot;
+import org.cong.server.bot.IffyBot;
 import org.cong.server.bot.Bot;
-import org.cong.server.bot.DumbBot;
-import org.cong.server.bot.TrivialBot;
+import org.cong.server.bot.RandoBot;
+import org.cong.server.bot.ZippyBot;
 import org.cong.shared.*;
 import org.cong.shared.protocol.*;
 import org.java_websocket.WebSocket;
@@ -42,6 +42,7 @@ public class GameServer extends ApplicationAdapter {
   boolean bounce;
   boolean drop;
   boolean collect;
+  boolean botsUsed;
 
   Runnable[] powerUpCreators = new Runnable[] {
     () -> BallFreeze.create(world),
@@ -49,7 +50,7 @@ public class GameServer extends ApplicationAdapter {
     () -> PaddleSlowdown.create(world),
     () -> PaddleGrowth.create(world)
   };
-  Supplier<Bot>[] botSuppliers = new Supplier[] {TrivialBot::new, DumbBot::new, BetterBot::new};
+  Supplier<Bot>[] botSuppliers = new Supplier[] {ZippyBot::new, RandoBot::new, IffyBot::new};
 
   @Override
   public void create() {
@@ -125,8 +126,7 @@ public class GameServer extends ApplicationAdapter {
     status = Status.COUNTDOWN;
     countdownTimer = 3;
     if (playTimer > recordTime) {
-      var botsPresent = Player.repo.stream().anyMatch(p -> p.bot().isPresent());
-      if (botsPresent) {
+      if (botsUsed) {
         sendServerMessage((int)playTimer + "s without accident with bot help wont be recorded");
       } else {
         recordTime = playTimer;
@@ -137,6 +137,7 @@ public class GameServer extends ApplicationAdapter {
         getRecordText(false).ifPresent(this::sendServerMessage);
       }
     }
+    botsUsed = Player.repo.stream().anyMatch(p -> p.bot().isPresent());;
     PowerUp.repo.stream().forEach(PowerUp::dispose);
     Ball.repo.first().startCountdown();
   }
@@ -189,7 +190,7 @@ public class GameServer extends ApplicationAdapter {
   }
 
   Optional<Player> createNewPlayer(NewPlayerRequest request, WebSocket socket) {
-    if (Paddle.repo.count() == Const.MAX_PADDLES) handleRemoveBot(); // if no free paddles, try to remove a bot
+    if (Paddle.repo.count() == Const.MAX_PADDLES) handleRemoveBots(1); // if no free paddles, try to remove one bot
     var paddle = Paddle.create(world);
     if (paddle.isEmpty()) logger.warn("All paddles occupied");
     var player = Player.create(request.name, paddle, Optional.empty());
@@ -234,28 +235,37 @@ public class GameServer extends ApplicationAdapter {
     player.paddle().ifPresent(p -> p.handleKeyEvent(event));
   }
 
-  void handleAddBot() {
+  void handleAddBot(String args) {
+    if (args.isEmpty()) addBot(MathUtils.random(botSuppliers.length - 1));
+    for (char c : args.toCharArray()) {
+      var index = c - 49;
+      if (index >= 0 && index < botSuppliers.length) addBot(index);
+    }
+  }
+
+  private void addBot(int index) {
     var paddle = Paddle.create(world);
     if (paddle.isEmpty()) {
       sendServerMessage("Can't create bot, all paddles occupied");
     } else {
-      var bot = botSuppliers[MathUtils.random(botSuppliers.length - 1)].get();
+      var bot = botSuppliers[index].get();
       bot.setup(paddle.get());
       var player = Player.create(bot.name(), paddle, Optional.of(bot));
       if (player.isEmpty()) {
         logger.error("Too many players"); // This should never happen since we got the paddle and player limit is higher
       } else {
+        botsUsed = true;
         logger.info("Bot " + player.get() + " created");
         sendServerMessage(bot.name() + " joined the game");
       }
     }
   }
 
-  void handleRemoveBot() {
+  void handleRemoveBots(int limit) {
     Player.repo.stream()
       .filter(p -> p.bot().isPresent())
-      .findFirst()
-      .ifPresent(p -> {
+      .limit(limit)
+      .forEach(p -> {
         logger.info("Bot" + p + " removed");
         disconnectPlayer(p);
       });
