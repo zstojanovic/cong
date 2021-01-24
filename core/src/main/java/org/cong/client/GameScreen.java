@@ -158,13 +158,23 @@ public class GameScreen extends ScreenAdapter {
   private class InputHandler extends InputAdapter {
     @Override
     public boolean keyDown(int keyCode) {
-      // workaround for space key issue in FF (possible root cause is TextArea bug)
-      if (keyCode == Input.Keys.SPACE && Gdx.app.getType() == Application.ApplicationType.WebGL) {
-        stage.keyTyped(' ');
+      // workaround for keys issue in FF (possible root cause is TextArea bug)
+      if (Gdx.app.getType() == Application.ApplicationType.WebGL) {
+        if (keyCode == Input.Keys.SPACE) {
+          stage.keyTyped(' ');
+        } else if (keyCode == Input.Keys.NUMPAD_DIVIDE) {
+          stage.keyTyped('/');
+        } else if (keyCode == Input.Keys.NUM_7) { // TODO Similar thing needed on TitleScreen
+          if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT)) {
+            stage.keyTyped('/');
+          } else {
+            stage.keyTyped('7');
+          }
+        }
       }
       if (keyCode == Input.Keys.F2) game.music.setVolume(1 - game.music.getVolume());
-      if (keyCode == Input.Keys.LEFT) game.connectionManager.send(new KeyEvent(KeyEvent.Code.LEFT_PRESSED));
-      if (keyCode == Input.Keys.RIGHT) game.connectionManager.send(new KeyEvent(KeyEvent.Code.RIGHT_PRESSED));
+      else if (keyCode == Input.Keys.LEFT) game.connectionManager.send(new KeyEvent(KeyEvent.Code.LEFT_PRESSED));
+      else if (keyCode == Input.Keys.RIGHT) game.connectionManager.send(new KeyEvent(KeyEvent.Code.RIGHT_PRESSED));
       return true;
     }
     @Override
