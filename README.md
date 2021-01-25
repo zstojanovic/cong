@@ -4,6 +4,8 @@ An experimental not so massively multiplayer online cooperative arcade game and/
 
 ![](https://img.itch.zone/aW1hZ2UvODc0MzU2LzQ5MjAzOTMucG5n/original/eWTIgS.png)
 
+Find additional info and play it on [itch.io](https://zstojanovic.itch.io/cong).
+
 ### Features
 
 - up to nine paddles/players in the game
